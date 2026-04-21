@@ -383,8 +383,19 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Visible dashed ring rendered at `r_max_influence` (manual visual check).
   - Rotating radial spokes animate smoothly.
 - **Verification:** `npm test tests/blackhole.test.ts`; manual: fly near the hole, see ring, slingshot past.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `gravityAccel(ex, ey, bh)` per D3 — acceleration, not force. Returns `[0,0]` beyond `influenceR` and at `r≈0`; magnitude capped at `G/eventHorizonR²`. Inverse-square law verified: at r=100 vs r=200 magnitudes follow 1:4 ratio.
+  - `updateBlackHole(bh, dt)` advances `ringPhase` at 0.5 rad/s (D18 didn't pin it, starter value) and wraps to `[0, 2π)`.
+  - `drawBlackHole(r, bh)`:
+    - solid magenta ring at `eventHorizonR + 4`
+    - 8 rotating radial spokes between `eventHorizonR + 4` and `+14`
+    - **dashed dim-magenta ring at `influenceR` per FR-6.7** (the non-negotiable fairness cue), 10/8 dash pattern
+    - no filled disc — the canvas bg is already black per PALETTE.bg
+  - `accelFor` in main.ts now accumulates: ship-thrust (if ship) + gravity from every live black hole. Particles return `[0,0]` per D7. Every other kind (ship, fighter, asteroid, bullet) is in-scope for gravity.
+  - `placeBlackHole(shipX, shipY)` uses `randRange(120, W-120) × (120, H-120)`, rejection-sampled until ≥ 250 px from ship spawn (FR-6.1). Fallback to upper-right area if 50 attempts fail.
+  - Event-horizon deaths: ship-vs-BH and asteroid-vs-BH and bullet-vs-BH and fighter-vs-BH are all handled by Task 11's resolver using the `CoreEntity.radius = eventHorizonR` that `createBlackHole` sets — circle-circle detection doubles as event-horizon detection.
+  - 11 tests for Task 12: 6 `gravityAccel` (beyond influence, inside influence, direction, r_min cap, r=0 safety, inverse-square law), 3 event-horizon collisions (ship/asteroid/invuln), 2 `updateBlackHole` (advance + wrap).
 
 ## Task 13: Ko-Dan Fighter enemy
 
