@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Aesthetic-pillar lint. Fails the build if any file under src/, dist/, or
 // index.html crosses the B-1 / B-2 / B-3 boundaries defined in CLAUDE.md
-// and specs/product-spec.md.
+// and sdd/v0/specs/product-spec.md.
 
 import { readdirSync, statSync, readFileSync, existsSync } from 'node:fs';
 import { join, extname, relative } from 'node:path';

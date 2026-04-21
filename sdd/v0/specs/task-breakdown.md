@@ -24,12 +24,12 @@ Sequenced implementation tasks for the 2-week vertical-slice MVP. Each task is s
 - [ ] Create GitHub repo: `github.com/cpv0310/SpaceNerds` (public)
 - [ ] Clone to local: `~/Documents/Code/SpaceNerds/`
 - [ ] Copy these Phase 0-2 artifacts from the vault into the repo:
-  - `research/research-brief.md`
-  - `specs/product-spec.md`
-  - `specs/task-breakdown.md` (this file)
-  - `docs/technical-design.md`
-  - `docs/grill-me-decisions.md`
-  - `docs/adr/ADR-001` through `ADR-007`
+  - `sdd/v0/research/research-brief.md`
+  - `sdd/v0/specs/product-spec.md`
+  - `sdd/v0/specs/task-breakdown.md` (this file)
+  - `sdd/v0/docs/technical-design.md`
+  - `sdd/v0/docs/grill-me-decisions.md`
+  - `sdd/v0/docs/adr/ADR-001` through `ADR-007`
   - `CLAUDE.md` (root of repo — project instructions for Claude)
 - [ ] Initial commit: `git init && git add . && git commit -m "docs: import Phase 0-2 Cascade artifacts"`
 - [ ] Push to GitHub, set `main` as default branch
@@ -48,11 +48,11 @@ We're implementing Task N of SpaceNerds.
 
 Read these docs in order:
 1. CLAUDE.md — project rules and architecture
-2. specs/task-breakdown.md § Task N — what to build
-3. specs/product-spec.md — for requirements context (FRs this task satisfies)
-4. docs/technical-design.md — for architecture (module layout, data models, tick order)
-5. docs/grill-me-decisions.md — for design amendments and clarifications
-6. docs/adr/ADR-*.md — for specific decisions relevant to this task
+2. sdd/v0/specs/task-breakdown.md § Task N — what to build
+3. sdd/v0/specs/product-spec.md — for requirements context (FRs this task satisfies)
+4. sdd/v0/docs/technical-design.md — for architecture (module layout, data models, tick order)
+5. sdd/v0/docs/grill-me-decisions.md — for design amendments and clarifications
+6. sdd/v0/docs/adr/ADR-*.md — for specific decisions relevant to this task
 
 Then follow the TDD loop:
 - Write the tests first, from Task N's Acceptance Criteria. Run them; confirm they fail (RED).
@@ -92,7 +92,7 @@ One commit per completed task. Commit message format:
 - What was tested
 - Any deviation from task spec (with reason)
 
-Refs: specs/task-breakdown.md § Task <N>
+Refs: sdd/v0/specs/task-breakdown.md § Task <N>
 ```
 
 Types: `feat` (new feature), `test` (test-only addition), `refactor` (no behavior change), `fix` (bug fix), `docs` (documentation), `chore` (tooling / build).
@@ -101,10 +101,10 @@ Types: `feat` (new feature), `test` (test-only addition), `refactor` (no behavio
 
 | Question | Authoritative source |
 |---|---|
-| What should this feature do? | `specs/product-spec.md` (FRs) |
-| What's the architecture here? | `docs/technical-design.md` |
-| Why did we pick X over Y? | `docs/adr/ADR-NNN-*.md` |
-| What was amended after grill-me? | `docs/grill-me-decisions.md` (wins over earlier drafts) |
+| What should this feature do? | `sdd/v0/specs/product-spec.md` (FRs) |
+| What's the architecture here? | `sdd/v0/docs/technical-design.md` |
+| Why did we pick X over Y? | `sdd/v0/docs/adr/ADR-NNN-*.md` |
+| What was amended after grill-me? | `sdd/v0/docs/grill-me-decisions.md` (wins over earlier drafts) |
 | What are the hard rules? | `CLAUDE.md` § Hard Boundaries |
 | What's this tunable constant? | `src/config.ts` (all tunables live here) |
 
@@ -155,7 +155,7 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
 
 - **Description:** Based on Task 1 experience, ratify LittleJS as primary OR fall back to raw Canvas 2D. Document the choice as an amendment to ADR-001. Half-day time-box.
 - **Dependencies:** Task 1
-- **Files:** `docs/adr/ADR-001-engine-choice.md` (amend with "Ratification" section)
+- **Files:** `sdd/v0/docs/adr/ADR-001-engine-choice.md` (amend with "Ratification" section)
 - **Acceptance Criteria:**
   - Clear choice between LittleJS and raw Canvas 2D committed.
   - Rationale recorded in ADR.

@@ -8,7 +8,7 @@ You command the Starship Poindexter, defending the Gamma Sector from the Ko-Dan 
 
 Mid-build — Phase 3 of a 2-week vertical-slice MVP, developed under [The Cascade](#methodology) spec-driven methodology. Not yet playable.
 
-Progress is tracked in [`specs/task-breakdown.md`](specs/task-breakdown.md). Each committed task lands as one commit on `main` — see the git log.
+Progress is tracked in [`sdd/v0/specs/task-breakdown.md`](sdd/v0/specs/task-breakdown.md). Each committed task lands as one commit on `main` — see the git log.
 
 ## Playing
 
@@ -30,10 +30,10 @@ npm run typecheck  # tsc --noEmit
 
 The spec, design, and ADRs are the source of truth — the code is a derivative. Read in this order:
 
-- [`specs/product-spec.md`](specs/product-spec.md) — functional requirements (what the game does)
-- [`docs/technical-design.md`](docs/technical-design.md) — architecture (how it's built)
-- [`docs/adr/`](docs/adr) — significant decisions (engine, physics integrator, gravity model, audio, entity model, build tooling, game loop)
-- [`docs/grill-me-decisions.md`](docs/grill-me-decisions.md) — Phase 2 exit-gate amendments (supersedes earlier docs where they disagree)
+- [`sdd/v0/specs/product-spec.md`](sdd/v0/specs/product-spec.md) — functional requirements (what the game does)
+- [`sdd/v0/docs/technical-design.md`](sdd/v0/docs/technical-design.md) — architecture (how it's built)
+- [`sdd/v0/docs/adr/`](sdd/v0/docs/adr) — significant decisions (engine, physics integrator, gravity model, audio, entity model, build tooling, game loop)
+- [`sdd/v0/docs/grill-me-decisions.md`](sdd/v0/docs/grill-me-decisions.md) — Phase 2 exit-gate amendments (supersedes earlier docs where they disagree)
 - [`CLAUDE.md`](CLAUDE.md) — project instructions (hard boundaries, conventions)
 
 ## Design pillars

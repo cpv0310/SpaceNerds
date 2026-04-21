@@ -57,22 +57,24 @@ SpaceNerds/
 │   ├── physics.test.ts
 │   ├── collision.test.ts
 │   ├── ...
-├── specs/
-│   ├── product-spec.md
-│   └── task-breakdown.md              THE runbook — start every session here
-├── docs/
-│   ├── technical-design.md
-│   ├── grill-me-decisions.md          amendments to TD/ADRs, authoritative
-│   └── adr/
-│       ├── ADR-001-engine-choice.md
-│       ├── ADR-002-physics-integrator.md
-│       ├── ADR-003-gravity-model.md
-│       ├── ADR-004-audio-library.md
-│       ├── ADR-005-entity-model.md
-│       ├── ADR-006-build-tooling.md
-│       └── ADR-007-game-loop-timing.md
-├── research/
-│   └── research-brief.md              competitive + technical prior art
+├── sdd/
+│   └── v0/                            Spec-driven-development artifacts, v0 slice
+│       ├── specs/
+│       │   ├── product-spec.md
+│       │   └── task-breakdown.md      THE runbook — start every session here
+│       ├── docs/
+│       │   ├── technical-design.md
+│       │   ├── grill-me-decisions.md  amendments to TD/ADRs, authoritative
+│       │   └── adr/
+│       │       ├── ADR-001-engine-choice.md
+│       │       ├── ADR-002-physics-integrator.md
+│       │       ├── ADR-003-gravity-model.md
+│       │       ├── ADR-004-audio-library.md
+│       │       ├── ADR-005-entity-model.md
+│       │       ├── ADR-006-build-tooling.md
+│       │       └── ADR-007-game-loop-timing.md
+│       └── research/
+│           └── research-brief.md      competitive + technical prior art
 └── dist/                              build output (gitignored)
 ```
 
@@ -80,12 +82,12 @@ SpaceNerds/
 
 When the docs disagree, later wins:
 
-1. **`docs/grill-me-decisions.md`** — Phase 2 exit-gate amendments. Takes precedence over anything else.
+1. **`sdd/v0/docs/grill-me-decisions.md`** — Phase 2 exit-gate amendments. Takes precedence over anything else.
 2. **`CLAUDE.md`** — this file. Hard rules for every session.
-3. **`docs/technical-design.md`** + ADRs — architecture and decisions.
-4. **`specs/product-spec.md`** — functional requirements (what to build).
-5. **`specs/task-breakdown.md`** — sequenced implementation tasks.
-6. **`research/research-brief.md`** — prior art, informational.
+3. **`sdd/v0/docs/technical-design.md`** + ADRs — architecture and decisions.
+4. **`sdd/v0/specs/product-spec.md`** — functional requirements (what to build).
+5. **`sdd/v0/specs/task-breakdown.md`** — sequenced implementation tasks.
+6. **`sdd/v0/research/research-brief.md`** — prior art, informational.
 
 ## Hard Boundaries (DO NOT CROSS)
 
@@ -120,11 +122,11 @@ When a task in the Task Breakdown feels like it needs a bitmap, an MP3, or a blo
 Every implementation session follows this pattern:
 
 1. **Clear context** (`/clear`) — no cross-task pollution.
-2. **Read the task.** Open `specs/task-breakdown.md`, find the lowest-numbered `pending` task whose dependencies are `done`.
+2. **Read the task.** Open `sdd/v0/specs/task-breakdown.md`, find the lowest-numbered `pending` task whose dependencies are `done`.
 3. **Load supporting context.** Read the task block, plus relevant sections of:
-   - `specs/product-spec.md` (FRs this task satisfies)
-   - `docs/technical-design.md` (architecture, tick order, interfaces)
-   - `docs/grill-me-decisions.md` (amendments)
+   - `sdd/v0/specs/product-spec.md` (FRs this task satisfies)
+   - `sdd/v0/docs/technical-design.md` (architecture, tick order, interfaces)
+   - `sdd/v0/docs/grill-me-decisions.md` (amendments)
    - Relevant ADR(s)
 4. **Set Status.** Update the task's Status field to `in-progress` in `task-breakdown.md`.
 5. **TDD RED.** Write tests from the Acceptance Criteria. Run them. Confirm they fail.
@@ -207,7 +209,7 @@ Build fails if `check:aesthetic` finds any forbidden file extension or CSS prope
   - What was tested
   - Any deviation from task spec (with reason)
   
-  Refs: specs/task-breakdown.md § Task <N>
+  Refs: sdd/v0/specs/task-breakdown.md § Task <N>
   ```
 - **Commit types:** `feat` | `fix` | `refactor` | `test` | `docs` | `chore`.
 - **No `--no-verify`, no `--amend` of pushed commits, no force pushes to `main`.**
@@ -247,7 +249,7 @@ Every tick, in order:
 10. `game.updateTimers(dt)` — cooldowns
 11. `game.updatePhase(dt)` — onboarding, spawners
 
-Do not reorder without updating `docs/grill-me-decisions.md`.
+Do not reorder without updating `sdd/v0/docs/grill-me-decisions.md`.
 
 ## Palette (never deviate)
 
@@ -271,21 +273,21 @@ Every `strokeStyle` assignment references `PALETTE.<key>`. No hard-coded hex str
 
 In priority order:
 
-1. Re-read the task's Acceptance Criteria in `task-breakdown.md`.
-2. Check `docs/grill-me-decisions.md` for a relevant decision.
+1. Re-read the task's Acceptance Criteria in `sdd/v0/specs/task-breakdown.md`.
+2. Check `sdd/v0/docs/grill-me-decisions.md` for a relevant decision.
 3. Check the relevant ADR.
-4. Check `docs/technical-design.md` for the architecture.
-5. Check `specs/product-spec.md` for the functional requirement.
+4. Check `sdd/v0/docs/technical-design.md` for the architecture.
+5. Check `sdd/v0/specs/product-spec.md` for the functional requirement.
 6. If the question isn't answered, STOP. Leave a clear note in the task's Notes field and ask Chris before inventing.
 
 Do not guess at architecture. Do not make up tuning values — use the starters in `config.ts` and tune in Task 20.
 
 ## Phase Progression (The Cascade)
 
-- Phase 0 Research — DONE (`research/research-brief.md`)
-- Phase 1 Product Spec — DONE (`specs/product-spec.md`)
+- Phase 0 Research — DONE (`sdd/v0/research/research-brief.md`)
+- Phase 1 Product Spec — DONE (`sdd/v0/specs/product-spec.md`)
 - Phase 2 Technical Design + ADRs + Task Breakdown — DONE
-- Phase 2 `/grill-me` exit gate — DONE (`docs/grill-me-decisions.md`)
+- Phase 2 `/grill-me` exit gate — DONE (`sdd/v0/docs/grill-me-decisions.md`)
 - **Phase 3 Implement — IN PROGRESS** ← you are here, work tasks 1-21 in order
 - Phase 4 Review — pending (multi-reviewer fresh-context pass after Task 21)
 - Phase 5 Compound — pending (learnings capture, commit, ship)
