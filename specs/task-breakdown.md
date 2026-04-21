@@ -287,8 +287,14 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Max speed clamp kicks in; ship never exceeds `SHIP_MAX_SPEED`.
   - Unit tests: rotation rate, thrust direction, speed cap, wrap.
 - **Verification:** `npm test tests/ship.test.ts`; manual: fly around the playfield.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `src/entities/ship.ts` gained `controlShip(ship, input, dt)`, `shipAccel(ship)`, and `drawShip(r, ship)`. Rotation uses the D8 opposing-key-cancel idiom (right − left). Both Arrow and WASD bindings work simultaneously per FR-2.3.
+  - Thrust is represented as a `thrusting: boolean` latch set by `controlShip`; `shipAccel` reads the latch and returns `(cos rot, sin rot) * SHIP_THRUST_ACCEL`. Dead ship forces `thrusting = false` and returns zero accel.
+  - Added to `config.ts`: `SHIP_ROTATION_SPEED=4`, `SHIP_THRUST_ACCEL=200`, `SHIP_MAX_SPEED=400` (Research Brief starters; Task 20 tunes).
+  - `main.ts` now owns the entity store, runs the full sim per tick while in PLAY (control → integrate → clampMaxSpeed → postStep → compact), and draws the ship during PLAY / PAUSED. Spawn happens at TITLE→PLAY (`startRun()` clears + spawns at playfield center).
+  - 19 ship tests: rotation (L/R + WASD + opposing-cancel), thrust latch + direction at rot=0 and rot=π/2, `shipAccel` pure output, momentum persistence, soft max-speed cap (asymptotic approach to SHIP_MAX_SPEED), wrap on three edges, dead ship ignores input.
+  - Ship silhouette is a 4-point convex hull (nose, port rear, rear notch, starboard rear); thrust flame is a separate 3-point path rendered only while `thrusting`.
 
 ## Task 9: Blaster + hyperspace
 

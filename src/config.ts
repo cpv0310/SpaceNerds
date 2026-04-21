@@ -9,6 +9,9 @@ export const ASTEROID_R_MEDIUM = 24;
 export const ASTEROID_R_SMALL = 12;
 
 export const SHIP_STARTING_LIVES = 3;
+export const SHIP_ROTATION_SPEED = 4.0;
+export const SHIP_THRUST_ACCEL = 200;
+export const SHIP_MAX_SPEED = 400;
 export const RESPAWN_INVULN = 2.0;
 export const BULLET_LIFE = 1.0;
 

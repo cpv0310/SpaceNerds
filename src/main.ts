@@ -1,8 +1,17 @@
 import { run } from './engine/loop';
 import { createInput } from './engine/input';
+import { createStore } from './engine/entities';
+import { integrate, clampMaxSpeed, postStep } from './engine/physics';
+import type { CoreEntity } from './entities/core';
+import {
+  controlShip,
+  shipAccel,
+  drawShip,
+  type Ship,
+} from './entities/ship';
 import { createGame, type GameState } from './game';
 import { createRenderer, type Renderer } from './render/canvas';
-import { PALETTE } from './config';
+import { PALETTE, PLAYFIELD_W, PLAYFIELD_H, SHIP_MAX_SPEED } from './config';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('missing #game canvas');
@@ -12,10 +21,23 @@ window.addEventListener('resize', () => renderer.resize());
 
 const game = createGame();
 const input = createInput(window);
+const store = createStore();
+
+function startRun(): void {
+  store.clear();
+  store.spawnShip(PLAYFIELD_W / 2, PLAYFIELD_H / 2);
+}
+
+function accelFor(e: CoreEntity): [number, number] {
+  const kind = (e as { kind?: string }).kind;
+  if (kind === 'ship') return shipAccel(e as Ship);
+  return [0, 0];
+}
 
 function handleStateInputs(): void {
   const s = game.state();
   if (input.justPressed('Space') && s === 'TITLE') {
+    startRun();
     game.transition('PLAY');
     return;
   }
@@ -25,14 +47,21 @@ function handleStateInputs(): void {
   }
 }
 
+function simulate(dt: number): void {
+  for (const s of store.byKind('ship')) controlShip(s, input, dt);
+  integrate(store.all(), dt, accelFor);
+  for (const s of store.byKind('ship')) clampMaxSpeed(s, SHIP_MAX_SPEED);
+  postStep(store.all(), dt);
+  store.compact();
+}
+
 run(
-  (_dt) => {
+  (dt) => {
     input.captureFrame();
     handleStateInputs();
+    if (game.state() === 'PLAY') simulate(dt);
   },
-  (_alpha) => {
-    render();
-  }
+  (_alpha) => render()
 );
 
 function render(): void {
@@ -43,11 +72,9 @@ function render(): void {
       renderTitle(renderer);
       break;
     case 'PLAY':
-      renderPlay(renderer);
-      break;
     case 'PAUSED':
-      renderPlay(renderer);
-      renderPausedOverlay(renderer);
+      renderScene(renderer);
+      if (s === 'PAUSED') renderPausedOverlay(renderer);
       break;
     case 'GAME_OVER':
       renderGameOver(renderer);
@@ -67,14 +94,8 @@ function renderTitle(r: Renderer): void {
   r.text('PRESS SPACE TO PLAY', cx, h * 0.66, PALETTE.hud, 28);
 }
 
-function renderPlay(r: Renderer): void {
-  r.text(
-    'PLAY (entities land in Task 5+)',
-    r.width() / 2,
-    r.height() / 2,
-    PALETTE.hud,
-    18
-  );
+function renderScene(r: Renderer): void {
+  for (const s of store.byKind('ship')) drawShip(r, s as Ship);
 }
 
 function renderPausedOverlay(r: Renderer): void {
