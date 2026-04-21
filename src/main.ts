@@ -16,6 +16,12 @@ import {
   drawBullet,
   type Bullet,
 } from './entities/bullet';
+import {
+  spawnInitialAsteroids,
+  updateAsteroid,
+  drawAsteroid,
+  type Asteroid,
+} from './entities/asteroid';
 import { rand } from './rand';
 import { createGame, type GameState } from './game';
 import { createRenderer, type Renderer } from './render/canvas';
@@ -33,7 +39,8 @@ const store = createStore();
 
 function startRun(): void {
   store.clear();
-  store.spawnShip(PLAYFIELD_W / 2, PLAYFIELD_H / 2);
+  const ship = store.spawnShip(PLAYFIELD_W / 2, PLAYFIELD_H / 2);
+  spawnInitialAsteroids(store, ship.x, ship.y);
 }
 
 function accelFor(e: CoreEntity): [number, number] {
@@ -66,6 +73,7 @@ function simulate(dt: number): void {
   integrate(store.all(), dt, accelFor);
   for (const s of store.byKind('ship')) clampMaxSpeed(s, SHIP_MAX_SPEED);
   for (const b of store.byKind('bullet')) updateBullet(b, dt);
+  for (const a of store.byKind('asteroid')) updateAsteroid(a, dt);
   postStep(store.all(), dt);
   store.compact();
 }
@@ -110,6 +118,7 @@ function renderTitle(r: Renderer): void {
 }
 
 function renderScene(r: Renderer): void {
+  for (const a of store.byKind('asteroid')) drawAsteroid(r, a as Asteroid);
   for (const b of store.byKind('bullet')) drawBullet(r, b as Bullet);
   for (const s of store.byKind('ship')) drawShip(r, s as Ship);
 }

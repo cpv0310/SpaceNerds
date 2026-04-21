@@ -333,8 +333,20 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Initial spawn at run start: at least 4 large, no closer than 300 px from ship.
   - Periodic spawn during active play when total < cap.
 - **Verification:** `npm test tests/asteroid.test.ts`; manual.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `createAsteroid` now generates an 8–12-vert polygonal hull at spawn (evenly angled, radius jittered ±`ASTEROID_HULL_JITTER` = 30%). Hull is stored once and never regenerated — `drawAsteroid` rotates/translates by `(a.rot, a.x, a.y)` each frame.
+  - `updateAsteroid(a, dt)`: advances `a.rot += a.rotVel * dt`. Asteroids never accelerate (no thrust path, no entry into `accelFor`).
+  - `splitAsteroid(store, a, randFn)`:
+    - large → 2 medium, medium → 2 small, small → 0 (vapor).
+    - Parent marked `alive=false` regardless of tier.
+    - Children inherit parent position + small random jitter (<±3 px) to prevent spawn overlap.
+    - Children spawn at ±(π/2 + small noise) from parent velocity direction, at parent speed + `ASTEROID_SPLIT_SPEED_BOOST` (40 px/s starter).
+  - `spawnInitialAsteroids(store, shipX, shipY, count, randFn)`: rejection-samples positions until `count` (default 4) are placed ≥ `ASTEROID_MIN_SHIP_DIST` (300 px) from the ship. Random initial velocity in `[20, 60]` px/s. Bounded retry (50×).
+  - **Periodic spawner NOT shipped in this task** — gating it on total<cap is straightforward but Task 16 (onboarding) controls *when* periodic spawning starts, and Task 10 doesn't need to ship it to satisfy acceptance. Starter `ASTEROID_SPAWN_INTERVAL=4s` and `ASTEROID_MAX=12` are in config for Task 16 / 20.
+  - main.ts: `startRun()` now spawns the ship and the initial 4 large asteroids. Simulate tick updates asteroid rotations; render draws asteroids (closed cyan polygons) under bullets under ship.
+  - 13 asteroid tests: hull vertex count + jitter bound + fixed-hull reuse, `updateAsteroid` rotation + dead-skip, split for each of three tiers, children inherit position, children have non-zero outward velocity, initial-spawn distance constraint + non-zero velocity + all-large.
+  - `ASTEROID_RADIUS` exported for Task 11 collision tuning and Task 15 scoring.
 
 ## Task 11: Collision detection
 

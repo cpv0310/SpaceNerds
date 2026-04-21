@@ -24,6 +24,15 @@ export const BH_R_MIN = 30;
 export const BH_R_MAX_INFLUENCE = 400;
 export const BH_G = 1000;
 
+export const ASTEROID_INITIAL_COUNT = 4;
+export const ASTEROID_MAX = 12;
+export const ASTEROID_SPAWN_INTERVAL = 4.0;
+export const ASTEROID_MIN_SHIP_DIST = 300;
+export const ASTEROID_INIT_SPEED_MIN = 20;
+export const ASTEROID_INIT_SPEED_MAX = 60;
+export const ASTEROID_SPLIT_SPEED_BOOST = 40;
+export const ASTEROID_HULL_JITTER = 0.3;
+
 export const PALETTE = {
   ship: '#ff2fcf',
   bullet: '#fffbe6',
