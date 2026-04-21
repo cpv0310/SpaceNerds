@@ -40,6 +40,23 @@ export function createShip(x: number, y: number): Ship {
   };
 }
 
+export function respawnShip(ship: Ship): void {
+  ship.x = PLAYFIELD_W / 2;
+  ship.y = PLAYFIELD_H / 2;
+  ship.vx = 0;
+  ship.vy = 0;
+  ship.ax = 0;
+  ship.ay = 0;
+  ship.ax_prev = 0;
+  ship.ay_prev = 0;
+  ship.rot = 0;
+  ship.alive = true;
+  ship.thrusting = false;
+  ship.fireCooldown = 0;
+  ship.hyperspaceCooldown = 0;
+  ship.invulnUntil = RESPAWN_INVULN;
+}
+
 export function controlShip(ship: Ship, input: Input, dt: number): void {
   if (ship.fireCooldown > 0) ship.fireCooldown = Math.max(0, ship.fireCooldown - dt);
   if (ship.hyperspaceCooldown > 0) ship.hyperspaceCooldown = Math.max(0, ship.hyperspaceCooldown - dt);

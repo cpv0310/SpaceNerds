@@ -438,8 +438,14 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Invulnerable ship cannot be harmed by enemy bullets or asteroids (per E-5).
   - Invulnerable ship STILL dies crossing the black hole event horizon (per E-1).
 - **Verification:** `npm test tests/lives.test.ts`; manual: die 3 times, observe GAME_OVER.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `respawnShip(ship)` in `entities/ship.ts`: resets position to playfield center, zeroes all velocity/accel fields, clears cooldowns, re-enables `alive`, and seeds `invulnUntil = RESPAWN_INVULN` (2s).
+  - `processShipDeath(ship, game)` in `game.ts`: called per tick after `detect→resolve`. No-op if `alive`. Otherwise decrements `lives`, then either `respawnShip` (if `lives > 0`) or `game.transition('GAME_OVER')` (if `lives === 0` and game is still in PLAY).
+  - **Invulnerability**: already working end-to-end from Task 11 (resolver checks `invulnUntil > 0` for asteroid/fighter/fighter-bullet) and Task 12 (BH horizon ignores invuln per E-1).
+  - **State wiring**: main.ts now transitions GAME_OVER → TITLE on `Space` (FR-10.3 "PRESS SPACE TO PLAY AGAIN"). Task 19 swaps in the high-score check and may route to INITIALS_ENTRY instead.
+  - `renderGameOver` overlays "GAME OVER" + prompt on the frozen scene (ship gone, asteroids + black hole still visible). Final-score display lands in Task 15 once the scoring system exists.
+  - 11 lives tests: starting lives, respawn resets (position, velocity, accel, invuln, cooldowns), processShipDeath paths (no-op alive, decrement + respawn, third-death → GAME_OVER, dead-in-GAME_OVER stays dead).
 
 ## Task 15: Scoring + HUD
 

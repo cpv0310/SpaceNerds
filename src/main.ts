@@ -39,7 +39,7 @@ import {
   type Fighter,
 } from './entities/fighter';
 import { rand, randRange } from './rand';
-import { createGame, type GameState } from './game';
+import { createGame, processShipDeath, type GameState } from './game';
 import { createRenderer, type Renderer } from './render/canvas';
 import {
   PALETTE,
@@ -110,10 +110,16 @@ function accelFor(e: CoreEntity): [number, number] {
 
 function handleStateInputs(): void {
   const s = game.state();
-  if (input.justPressed('Space') && s === 'TITLE') {
-    startRun();
-    game.transition('PLAY');
-    return;
+  if (input.justPressed('Space')) {
+    if (s === 'TITLE') {
+      startRun();
+      game.transition('PLAY');
+      return;
+    }
+    if (s === 'GAME_OVER') {
+      game.transition('TITLE');
+      return;
+    }
   }
   if (input.justPressed('Escape')) {
     if (s === 'PLAY') game.transition('PAUSED');
@@ -146,6 +152,7 @@ function simulate(dt: number): void {
   for (const bh of store.byKind('blackhole')) updateBlackHole(bh as BlackHole, dt);
   postStep(store.all(), dt);
   for (const pair of detect(store.all())) resolveCollision(pair, store, rand);
+  for (const s of store.byKind('ship')) processShipDeath(s, game);
   store.compact();
 
   fighterSpawnTimer -= dt;
@@ -217,7 +224,15 @@ function renderPausedOverlay(r: Renderer): void {
 }
 
 function renderGameOver(r: Renderer): void {
-  r.text('GAME OVER', r.width() / 2, r.height() / 2, PALETTE.fighter, 56);
+  renderScene(r);
+  r.text('GAME OVER', r.width() / 2, r.height() / 2 - 30, PALETTE.fighter, 56);
+  r.text(
+    'PRESS SPACE TO PLAY AGAIN',
+    r.width() / 2,
+    r.height() / 2 + 40,
+    PALETTE.hud,
+    20
+  );
 }
 
 function renderInitialsEntry(r: Renderer): void {

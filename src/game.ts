@@ -1,3 +1,5 @@
+import { respawnShip, type Ship } from './entities/ship';
+
 export type GameState =
   | 'TITLE'
   | 'PLAY'
@@ -35,4 +37,14 @@ export function createGame(): Game {
       current = to;
     },
   };
+}
+
+export function processShipDeath(ship: Ship, game: Game): void {
+  if (ship.alive) return;
+  ship.lives -= 1;
+  if (ship.lives > 0) {
+    respawnShip(ship);
+  } else if (game.state() === 'PLAY') {
+    game.transition('GAME_OVER');
+  }
 }
