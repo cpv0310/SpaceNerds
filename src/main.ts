@@ -30,10 +30,26 @@ import {
   drawBlackHole,
   type BlackHole,
 } from './entities/blackhole';
+import {
+  controlFighter,
+  fighterAccel,
+  tryFighterFire,
+  spawnFighterAtEdge,
+  drawFighter,
+  type Fighter,
+} from './entities/fighter';
 import { rand, randRange } from './rand';
 import { createGame, type GameState } from './game';
 import { createRenderer, type Renderer } from './render/canvas';
-import { PALETTE, PLAYFIELD_W, PLAYFIELD_H, SHIP_MAX_SPEED } from './config';
+import {
+  PALETTE,
+  PLAYFIELD_W,
+  PLAYFIELD_H,
+  SHIP_MAX_SPEED,
+  FIGHTER_MAX_SPEED,
+  FIGHTER_MAX,
+  FIGHTER_SPAWN_INTERVAL,
+} from './config';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('missing #game canvas');
@@ -67,6 +83,7 @@ function startRun(): void {
   const ship = store.spawnShip(PLAYFIELD_W / 2, PLAYFIELD_H / 2);
   placeBlackHole(ship.x, ship.y);
   spawnInitialAsteroids(store, ship.x, ship.y);
+  fighterSpawnTimer = FIGHTER_SPAWN_INTERVAL;
 }
 
 function accelFor(e: CoreEntity): [number, number] {
@@ -78,6 +95,10 @@ function accelFor(e: CoreEntity): [number, number] {
     const [sx, sy] = shipAccel(e as Ship);
     ax += sx;
     ay += sy;
+  } else if (kind === 'fighter') {
+    const [fx, fy] = fighterAccel(e as Fighter);
+    ax += fx;
+    ay += fy;
   }
   for (const bh of store.byKind('blackhole')) {
     const [gx, gy] = gravityAccel(e.x, e.y, bh as BlackHole);
@@ -100,22 +121,41 @@ function handleStateInputs(): void {
   }
 }
 
+let fighterSpawnTimer = FIGHTER_SPAWN_INTERVAL;
+
 function simulate(dt: number): void {
-  for (const ship of store.byKind('ship')) {
-    controlShip(ship, input, dt);
-    if (input.justPressed('Space')) tryFireBullet(ship, store);
+  const ship = store.byKind('ship')[0];
+  for (const s of store.byKind('ship')) {
+    controlShip(s, input, dt);
+    if (input.justPressed('Space')) tryFireBullet(s, store);
     if (input.justPressed('ShiftLeft') || input.justPressed('ShiftRight')) {
-      tryHyperspace(ship, rand);
+      tryHyperspace(s, rand);
+    }
+  }
+  if (ship) {
+    for (const f of store.byKind('fighter')) {
+      controlFighter(f as Fighter, ship, dt);
+      tryFighterFire(f as Fighter, ship, store);
     }
   }
   integrate(store.all(), dt, accelFor);
   for (const s of store.byKind('ship')) clampMaxSpeed(s, SHIP_MAX_SPEED);
+  for (const f of store.byKind('fighter')) clampMaxSpeed(f, FIGHTER_MAX_SPEED);
   for (const b of store.byKind('bullet')) updateBullet(b, dt);
   for (const a of store.byKind('asteroid')) updateAsteroid(a, dt);
   for (const bh of store.byKind('blackhole')) updateBlackHole(bh as BlackHole, dt);
   postStep(store.all(), dt);
   for (const pair of detect(store.all())) resolveCollision(pair, store, rand);
   store.compact();
+
+  fighterSpawnTimer -= dt;
+  if (
+    fighterSpawnTimer <= 0 &&
+    store.byKind('fighter').filter((f) => f.alive).length < FIGHTER_MAX
+  ) {
+    spawnFighterAtEdge(store, rand);
+    fighterSpawnTimer = FIGHTER_SPAWN_INTERVAL;
+  }
 }
 
 run(
@@ -160,6 +200,7 @@ function renderTitle(r: Renderer): void {
 function renderScene(r: Renderer): void {
   for (const bh of store.byKind('blackhole')) drawBlackHole(r, bh as BlackHole);
   for (const a of store.byKind('asteroid')) drawAsteroid(r, a as Asteroid);
+  for (const f of store.byKind('fighter')) drawFighter(r, f as Fighter);
   for (const b of store.byKind('bullet')) drawBullet(r, b as Bullet);
   for (const s of store.byKind('ship')) drawShip(r, s as Ship);
 }

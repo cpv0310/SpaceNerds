@@ -33,6 +33,15 @@ export const ASTEROID_INIT_SPEED_MAX = 60;
 export const ASTEROID_SPLIT_SPEED_BOOST = 40;
 export const ASTEROID_HULL_JITTER = 0.3;
 
+export const FIGHTER_MAX = 3;
+export const FIGHTER_SPAWN_INTERVAL = 8.0;
+export const FIGHTER_THRUST_ACCEL = 150;
+export const FIGHTER_MAX_SPEED = 280;
+export const FIGHTER_FIRE_COOLDOWN = 1.5;
+export const FIGHTER_BULLET_SPEED = 500;
+export const FIGHTER_APPROACH_DIST = 400;
+export const FIGHTER_RETREAT_DIST = 150;
+
 export const PALETTE = {
   ship: '#ff2fcf',
   bullet: '#fffbe6',

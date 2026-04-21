@@ -411,8 +411,20 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Fighter is affected by black hole gravity and destroyed by event horizon.
   - Fighter spawns periodically during active play, capped at 3 concurrent.
 - **Verification:** `npm test tests/fighter.test.ts`; manual.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `controlFighter(f, ship, dt)`: picks `aiState` from squared distance (`approach > 400², strafe [150²,400²], retreat < 150²`), then sets `rot` accordingly (face-ship / face-perpendicular / face-away). Ticks `fireCooldown` down.
+  - `fighterAccel(f)`: thrust vector at `FIGHTER_THRUST_ACCEL * (cos rot, sin rot)` — always on (fighters are always trying to move in the direction of their current AI state).
+  - `tryFighterFire(f, ship, store)`: fires only while strafing and when cooldown is clear. Bullet aimed at the ship's current position (not fighter's rotation), with `'fighter'` source. `FIGHTER_BULLET_SPEED=500 px/s` world-frame.
+  - `spawnFighterAtEdge(store, randFn)`: picks a random one of the four playfield edges, random position along it, 10 px inset.
+  - Scoring for fighter kills (200 points) is Task 15 — here we just ensure single-shot destruction via the existing `bullet:fighter` resolver (Task 11).
+  - Drawing: 6-vert amber silhouette (swept-wing shape, clearly distinct from the ship triangle and asteroid polygon) per FR-7.7.
+  - **main.ts wiring**:
+    - `accelFor` gained a fighter branch: `kind === 'fighter' ? fighterAccel(e)` plus the same gravity accumulation as every other non-particle entity (D7).
+    - `simulate` runs `controlFighter` and `tryFighterFire` for each fighter, then `clampMaxSpeed(FIGHTER_MAX_SPEED=280)` after integrate.
+    - A `fighterSpawnTimer` ticks down; when ≤0 and live fighter count < 3, `spawnFighterAtEdge` runs and the timer resets to `FIGHTER_SPAWN_INTERVAL=8s`. Task 16 onboarding will gate this until the grace window ends.
+    - Fighters render between asteroids and bullets in the z-order.
+  - 17 fighter tests: 3 AI state bands, 3 rotations per state, 2 `fighterAccel` (alive + dead), 4 firing (in-range fire, out-of-range no-fire, cooldown gating, dead no-fire), 2 spawn (interior + edge-adjacent), 1 cooldown tick. All 189 previously-green tests remain green.
 
 ## Task 14: Lives, respawn, game over
 
