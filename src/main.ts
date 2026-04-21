@@ -34,7 +34,6 @@ import {
   controlFighter,
   fighterAccel,
   tryFighterFire,
-  spawnFighterAtEdge,
   drawFighter,
   type Fighter,
 } from './entities/fighter';
@@ -46,6 +45,12 @@ import {
   type GameState,
   type RunState,
 } from './game';
+import {
+  createSpawnTimers,
+  updateRunPhase,
+  tickSpawners,
+  type SpawnTimers,
+} from './spawners';
 import { createRenderer, type Renderer } from './render/canvas';
 import { drawHud } from './render/hud';
 import {
@@ -54,8 +59,6 @@ import {
   PLAYFIELD_H,
   SHIP_MAX_SPEED,
   FIGHTER_MAX_SPEED,
-  FIGHTER_MAX,
-  FIGHTER_SPAWN_INTERVAL,
 } from './config';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
@@ -68,6 +71,7 @@ const game = createGame();
 const input = createInput(window);
 const store = createStore();
 let runState: RunState = createRunState();
+let spawnTimers: SpawnTimers = createSpawnTimers();
 
 const BLACK_HOLE_MIN_SHIP_DIST = 250;
 
@@ -89,10 +93,10 @@ function placeBlackHole(shipX: number, shipY: number): void {
 function startRun(): void {
   store.clear();
   runState = createRunState();
+  spawnTimers = createSpawnTimers();
   const ship = store.spawnShip(PLAYFIELD_W / 2, PLAYFIELD_H / 2);
   placeBlackHole(ship.x, ship.y);
   spawnInitialAsteroids(store, ship.x, ship.y);
-  fighterSpawnTimer = FIGHTER_SPAWN_INTERVAL;
 }
 
 function accelFor(e: CoreEntity): [number, number] {
@@ -136,8 +140,6 @@ function handleStateInputs(): void {
   }
 }
 
-let fighterSpawnTimer = FIGHTER_SPAWN_INTERVAL;
-
 function simulate(dt: number): void {
   const ship = store.byKind('ship')[0];
   for (const s of store.byKind('ship')) {
@@ -163,16 +165,9 @@ function simulate(dt: number): void {
   for (const pair of detect(store.all())) resolveCollision(pair, store, rand, runState);
   for (const s of store.byKind('ship')) processShipDeath(s, game);
   runState.elapsed += dt;
+  updateRunPhase(runState);
+  tickSpawners(store, runState, spawnTimers, dt, rand);
   store.compact();
-
-  fighterSpawnTimer -= dt;
-  if (
-    fighterSpawnTimer <= 0 &&
-    store.byKind('fighter').filter((f) => f.alive).length < FIGHTER_MAX
-  ) {
-    spawnFighterAtEdge(store, rand);
-    fighterSpawnTimer = FIGHTER_SPAWN_INTERVAL;
-  }
 }
 
 run(

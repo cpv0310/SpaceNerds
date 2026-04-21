@@ -479,8 +479,16 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Initial asteroid set from Task 10 is NOT affected.
   - Unit test with mocked time covers the transition.
 - **Verification:** `npm test tests/onboarding.test.ts`
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - New module `src/spawners.ts` owns periodic-spawn logic. Exports:
+    - `SpawnTimers { fighter, asteroid }` + `createSpawnTimers()`
+    - `updateRunPhase(run)` — flips `onboarding → active` when `run.elapsed >= run.phaseSwitchAt`. One-way (never switches back to onboarding).
+    - `tickSpawners(store, run, timers, dt, randFn)` — decrements both timers; bails early (and holds timers to full interval) when `phase !== 'active'`; otherwise fires a fighter or asteroid spawn when its timer reaches 0 and the respective cap (`FIGHTER_MAX=3`, `ASTEROID_MAX=12`) isn't yet met.
+  - `src/entities/asteroid.ts` gained `spawnAsteroidAtEdge(store, randFn)` — random edge, 10 px inset, velocity pointed roughly inward with small cross-axis jitter.
+  - `main.ts` refactored: replaced inline `fighterSpawnTimer` logic with `tickSpawners`, which now handles both fighter AND periodic asteroid spawning in one call. `ONBOARDING_GRACE_SEC=25` is the default `phaseSwitchAt`.
+  - Initial 4 large asteroids from `spawnInitialAsteroids` (Task 10) are **not affected** by onboarding — they spawn once in `startRun` and stay.
+  - 9 onboarding tests: phase lifecycle (start/stay-below/switch-at/persist-after), fighter/asteroid no-spawn in onboarding even past interval, both begin spawning after `phase='active'`, integration test asserting first fighter spawn occurs at `elapsed >= ONBOARDING_GRACE_SEC`.
 
 ## Task 17: Audio — jsfxr SFX integration
 

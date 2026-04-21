@@ -104,6 +104,42 @@ export function splitAsteroid(
   return children;
 }
 
+export function spawnAsteroidAtEdge(
+  store: EntityStore,
+  randFn: () => number = defaultRand
+): Asteroid {
+  const edge = Math.floor(randFn() * 4);
+  let x: number;
+  let y: number;
+  let vx: number;
+  let vy: number;
+  const speed =
+    ASTEROID_INIT_SPEED_MIN +
+    randFn() * (ASTEROID_INIT_SPEED_MAX - ASTEROID_INIT_SPEED_MIN);
+  if (edge === 0) {
+    x = randFn() * PLAYFIELD_W;
+    y = 10;
+    vx = (randFn() - 0.5) * speed * 0.5;
+    vy = speed;
+  } else if (edge === 1) {
+    x = PLAYFIELD_W - 10;
+    y = randFn() * PLAYFIELD_H;
+    vx = -speed;
+    vy = (randFn() - 0.5) * speed * 0.5;
+  } else if (edge === 2) {
+    x = randFn() * PLAYFIELD_W;
+    y = PLAYFIELD_H - 10;
+    vx = (randFn() - 0.5) * speed * 0.5;
+    vy = -speed;
+  } else {
+    x = 10;
+    y = randFn() * PLAYFIELD_H;
+    vx = speed;
+    vy = (randFn() - 0.5) * speed * 0.5;
+  }
+  return store.spawnAsteroid(x, y, 'large', vx, vy);
+}
+
 export function spawnInitialAsteroids(
   store: EntityStore,
   shipX: number,
