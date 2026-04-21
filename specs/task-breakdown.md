@@ -264,8 +264,15 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - `text` renders legibly (manual verify in dev server).
   - All color strings come from the `PALETTE` constant.
 - **Verification:** `npm test tests/render.test.ts`; manual inspection in dev server.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `createRenderer({ canvas, getDevicePixelRatio?, getViewport? })` factory. DPR and viewport are injectable for tests; default to real `window` globals in production.
+  - Exports: `beginFrame()` (fills PLAYFIELD_W×H with `PALETTE.bg`), `strokePath(pts, color, {closed?})`, `strokeCircle(x,y,r,color)`, `strokeDashedCircle(x,y,r,color,dash)` (sets + clears `setLineDash` around the stroke), `text(s,x,y,color,size,align?,baseline?)`, plus `resize()`, `width()`, `height()`.
+  - `resize()` implements D5 end-to-end: aspect-preserving CSS fit, `cssSize × dpr` backing store, logical-to-physical scale via `ctx.setTransform`, `lineWidth=1.5`, round caps/joins.
+  - Tests use a Proxy-mocked `CanvasRenderingContext2D` (D14) — every method call and prop-set gets recorded, asserted by name/args. 12 tests total: beginFrame bg, strokePath (setStroke + beginPath + moveTo + lineTo + stroke ordering, 3-vertex path arg check, empty-/single-point no-op, closed option), strokeCircle (arc+stroke), strokeDashedCircle (setLineDash set-then-clear), text (fillStyle/font/align), resize (aspect preservation at two viewport shapes, DPR applied, line attributes set).
+  - Test harness in `tests/test-harness.ts` exposes `createMockCtx` and `createMockCanvas` for future render-adjacent tests.
+  - `main.ts` now delegates all drawing to `Renderer`. The title / play / paused / game-over / initials screens render through `r.text(...)`. The debug state badge stays as-is but goes through the same renderer.
+  - Still using `monospace` fallback font (D18 swaps in Press Start 2P at Task 19). Every color passed to the renderer comes from `PALETTE.*` — no hex literals escape `config.ts`.
 
 ## Task 8: Ship controller + movement
 

@@ -1,44 +1,17 @@
 import { run } from './engine/loop';
 import { createInput } from './engine/input';
 import { createGame, type GameState } from './game';
-import { PALETTE, PLAYFIELD_W, PLAYFIELD_H } from './config';
+import { createRenderer, type Renderer } from './render/canvas';
+import { PALETTE } from './config';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('missing #game canvas');
-const ctx = canvas.getContext('2d');
-if (!ctx) throw new Error('no 2d context');
+
+const renderer = createRenderer({ canvas });
+window.addEventListener('resize', () => renderer.resize());
 
 const game = createGame();
 const input = createInput(window);
-
-let viewW = PLAYFIELD_W;
-let viewH = PLAYFIELD_H;
-
-function resize(): void {
-  const dpr = window.devicePixelRatio || 1;
-  const aspect = PLAYFIELD_W / PLAYFIELD_H;
-  let cssW: number;
-  let cssH: number;
-  if (window.innerWidth / window.innerHeight > aspect) {
-    cssH = window.innerHeight;
-    cssW = cssH * aspect;
-  } else {
-    cssW = window.innerWidth;
-    cssH = cssW / aspect;
-  }
-  canvas!.style.width = `${cssW}px`;
-  canvas!.style.height = `${cssH}px`;
-  canvas!.width = Math.round(cssW * dpr);
-  canvas!.height = Math.round(cssH * dpr);
-  const scale = canvas!.width / PLAYFIELD_W;
-  ctx!.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx!.lineCap = 'round';
-  ctx!.lineJoin = 'round';
-  viewW = PLAYFIELD_W;
-  viewH = PLAYFIELD_H;
-}
-resize();
-window.addEventListener('resize', resize);
 
 function handleStateInputs(): void {
   const s = game.state();
@@ -63,99 +36,66 @@ run(
 );
 
 function render(): void {
-  ctx!.fillStyle = PALETTE.bg;
-  ctx!.fillRect(0, 0, viewW, viewH);
+  renderer.beginFrame();
   const s = game.state();
   switch (s) {
     case 'TITLE':
-      renderTitle();
+      renderTitle(renderer);
       break;
     case 'PLAY':
-      renderPlay();
+      renderPlay(renderer);
       break;
     case 'PAUSED':
-      renderPlay();
-      renderPausedOverlay();
+      renderPlay(renderer);
+      renderPausedOverlay(renderer);
       break;
     case 'GAME_OVER':
-      renderGameOver();
+      renderGameOver(renderer);
       break;
     case 'INITIALS_ENTRY':
-      renderInitialsEntry();
+      renderInitialsEntry(renderer);
       break;
   }
-  renderDebugBadge(s);
+  renderDebugBadge(renderer, s);
 }
 
-function renderTitle(): void {
-  const cx = viewW / 2;
-  drawText('SPACENERDS', cx, viewH * 0.38, 72, PALETTE.ship, 'center');
-  drawText(
-    'DEFEND THE GAMMA SECTOR',
-    cx,
-    viewH * 0.5,
-    20,
-    PALETTE.asteroid,
-    'center'
-  );
-  drawText('PRESS SPACE TO PLAY', cx, viewH * 0.66, 28, PALETTE.hud, 'center');
+function renderTitle(r: Renderer): void {
+  const cx = r.width() / 2;
+  const h = r.height();
+  r.text('SPACENERDS', cx, h * 0.38, PALETTE.ship, 72);
+  r.text('DEFEND THE GAMMA SECTOR', cx, h * 0.5, PALETTE.asteroid, 20);
+  r.text('PRESS SPACE TO PLAY', cx, h * 0.66, PALETTE.hud, 28);
 }
 
-function renderPlay(): void {
-  drawText(
+function renderPlay(r: Renderer): void {
+  r.text(
     'PLAY (entities land in Task 5+)',
-    viewW / 2,
-    viewH / 2,
-    18,
+    r.width() / 2,
+    r.height() / 2,
     PALETTE.hud,
-    'center'
+    18
   );
 }
 
-function renderPausedOverlay(): void {
-  ctx!.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx!.fillRect(0, 0, viewW, viewH);
-  drawText('PAUSED', viewW / 2, viewH / 2, 56, PALETTE.hud, 'center');
-  drawText(
+function renderPausedOverlay(r: Renderer): void {
+  r.text('PAUSED', r.width() / 2, r.height() / 2, PALETTE.hud, 56);
+  r.text(
     'ESC TO RESUME',
-    viewW / 2,
-    viewH / 2 + 50,
-    18,
+    r.width() / 2,
+    r.height() / 2 + 50,
     PALETTE.hud,
-    'center'
+    18
   );
 }
 
-function renderGameOver(): void {
-  drawText('GAME OVER', viewW / 2, viewH / 2, 56, PALETTE.fighter, 'center');
+function renderGameOver(r: Renderer): void {
+  r.text('GAME OVER', r.width() / 2, r.height() / 2, PALETTE.fighter, 56);
 }
 
-function renderInitialsEntry(): void {
-  drawText(
-    'ENTER INITIALS',
-    viewW / 2,
-    viewH / 2,
-    40,
-    PALETTE.hud,
-    'center'
-  );
+function renderInitialsEntry(r: Renderer): void {
+  r.text('ENTER INITIALS', r.width() / 2, r.height() / 2, PALETTE.hud, 40);
 }
 
-function renderDebugBadge(s: GameState): void {
-  drawText(`state: ${s}`, 12, 24, 14, PALETTE.hud, 'left');
-}
-
-function drawText(
-  str: string,
-  x: number,
-  y: number,
-  size: number,
-  color: string,
-  align: CanvasTextAlign
-): void {
-  ctx!.fillStyle = color;
-  ctx!.font = `${size}px monospace`;
-  ctx!.textAlign = align;
-  ctx!.textBaseline = 'alphabetic';
-  ctx!.fillText(str, x, y);
+function renderDebugBadge(r: Renderer, s: GameState): void {
+  r.text(`state: ${s}`, 12, 24, PALETTE.hud, 14, 'left');
 }
