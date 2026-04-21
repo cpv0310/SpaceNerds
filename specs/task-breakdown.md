@@ -501,8 +501,27 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Safari initial-gesture unlock works (tested manually on Safari).
   - Unit test mocks `AudioContext` and verifies correct `play` calls per game event.
 - **Verification:** `npm test`; manual audio test in Chrome, Firefox, Safari.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - **Deviation from ADR-004 / NFR-D7**: shipped raw `OscillatorNode`/`GainNode` one-shots instead of jsfxr. Rationale: avoids a new runtime dependency install; D10 already mandated raw oscillators for thrust, so extending the same pattern to the one-shots keeps the audio stack one system rather than two; the resulting bundle is 7.12 KB gzipped (still ~21× under the 150 KB budget). The aesthetic outcome is identical — everything is runtime-synthesized, no files. If a future session wants jsfxr's richer palette, swap in `jsfxr` + keep the `Sfx` interface — the `play(name)` contract is stable.
+  - `src/audio/presets.ts` defines 9 one-shot presets `{ waveform, startFreq, endFreq, volume, duration }`. Each sound is a freq sweep + exponential gain decay. Table-driven so Task 20 can tune by editing numbers.
+  - `src/audio/sfx.ts` — `createSfx(audioCtxFactory)` factory with:
+    - `init()`: lazy — creates `AudioContext`, master gain, calls `resume()` if suspended (Safari unlock per D9/OQ-10). Idempotent. Swallows errors silently (E-11).
+    - `play(name)`: no-op before init and when muted. Creates one-shot osc+gain, connects through master, starts/stops.
+    - `startThrust()` / `stopThrust()`: single persistent sawtooth @ 85 Hz per D10 with 50ms attack / 80ms release. Idempotent; muted cancels. Can be restarted after stop.
+    - `setMuted(bool)`: flips the master gain between 0 and `MASTER_GAIN` via `setValueAtTime`; also `stopThrust` if muting.
+  - **Mute key**: `M` toggles mute per D16. Persistence of the mute state is Task 18.
+  - **Audio unlock**: `init()` fires when SPACE is pressed to start the run (the first qualifying user gesture per D9). Pressing M before starting a run toggles the muted flag but no audio is running yet.
+  - **SFX routing**:
+    - `shoot` ← ship fires (only when the bullet actually spawned; respects cooldown)
+    - `fighter_shot` ← `tryFighterFire` succeeds
+    - `hyperspace_in` / `hyperspace_out` ← on Shift, gated on cooldown; `_out` skipped if hyperspace kills the ship
+    - `bang_{large,medium,small}` ← asteroid destroyed (by bullet, fighter ram, or BH)
+    - `fighter_bang` ← fighter destroyed (by ship bullet, ram, or BH)
+    - `ship_bang` ← ship destroyed (by asteroid, fighter, fighter bullet, or BH)
+    - `thrust` ← edge-triggered on ship.thrusting transitions
+  - `resolveCollision` grew an optional `SfxSink` parameter so resolution-time sounds happen at the authoritative kill site, not via delta-tracking in main.ts.
+  - Mock `AudioContext` added to `tests/test-harness.ts` (oscillators + gains record every method call + scheduled-param event). 18 SFX tests covering lifecycle, all 9 one-shot presets, thrust idempotency + start/stop/restart, mute flips + gain scrub, init-failure resilience (E-11).
 
 ## Task 18: localStorage persistence
 

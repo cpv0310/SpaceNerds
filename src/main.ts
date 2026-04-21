@@ -53,6 +53,7 @@ import {
 } from './spawners';
 import { createRenderer, type Renderer } from './render/canvas';
 import { drawHud } from './render/hud';
+import { createSfx } from './audio/sfx';
 import {
   PALETTE,
   PLAYFIELD_W,
@@ -70,8 +71,10 @@ window.addEventListener('resize', () => renderer.resize());
 const game = createGame();
 const input = createInput(window);
 const store = createStore();
+const sfx = createSfx();
 let runState: RunState = createRunState();
 let spawnTimers: SpawnTimers = createSpawnTimers();
+let thrustingLastTick = false;
 
 const BLACK_HOLE_MIN_SHIP_DIST = 250;
 
@@ -97,6 +100,7 @@ function startRun(): void {
   const ship = store.spawnShip(PLAYFIELD_W / 2, PLAYFIELD_H / 2);
   placeBlackHole(ship.x, ship.y);
   spawnInitialAsteroids(store, ship.x, ship.y);
+  thrustingLastTick = false;
 }
 
 function accelFor(e: CoreEntity): [number, number] {
@@ -123,8 +127,12 @@ function accelFor(e: CoreEntity): [number, number] {
 
 function handleStateInputs(): void {
   const s = game.state();
+  if (input.justPressed('KeyM')) {
+    sfx.setMuted(!sfx.isMuted());
+  }
   if (input.justPressed('Space')) {
     if (s === 'TITLE') {
+      if (!sfx.isInitialized()) void sfx.init();
       startRun();
       game.transition('PLAY');
       return;
@@ -135,8 +143,10 @@ function handleStateInputs(): void {
     }
   }
   if (input.justPressed('Escape')) {
-    if (s === 'PLAY') game.transition('PAUSED');
-    else if (s === 'PAUSED') game.transition('PLAY');
+    if (s === 'PLAY') {
+      sfx.stopThrust();
+      game.transition('PAUSED');
+    } else if (s === 'PAUSED') game.transition('PLAY');
   }
 }
 
@@ -144,15 +154,26 @@ function simulate(dt: number): void {
   const ship = store.byKind('ship')[0];
   for (const s of store.byKind('ship')) {
     controlShip(s, input, dt);
-    if (input.justPressed('Space')) tryFireBullet(s, store);
+    if (input.justPressed('Space')) {
+      if (tryFireBullet(s, store)) sfx.play('shoot');
+    }
     if (input.justPressed('ShiftLeft') || input.justPressed('ShiftRight')) {
-      tryHyperspace(s, rand);
+      if (s.hyperspaceCooldown === 0) {
+        sfx.play('hyperspace_in');
+        const died = tryHyperspace(s, rand);
+        if (!died) sfx.play('hyperspace_out');
+      }
     }
   }
+  const isThrusting = ship ? ship.alive && ship.thrusting : false;
+  if (isThrusting && !thrustingLastTick) sfx.startThrust();
+  else if (!isThrusting && thrustingLastTick) sfx.stopThrust();
+  thrustingLastTick = isThrusting;
+
   if (ship) {
     for (const f of store.byKind('fighter')) {
       controlFighter(f as Fighter, ship, dt);
-      tryFighterFire(f as Fighter, ship, store);
+      if (tryFighterFire(f as Fighter, ship, store)) sfx.play('fighter_shot');
     }
   }
   integrate(store.all(), dt, accelFor);
@@ -162,7 +183,8 @@ function simulate(dt: number): void {
   for (const a of store.byKind('asteroid')) updateAsteroid(a, dt);
   for (const bh of store.byKind('blackhole')) updateBlackHole(bh as BlackHole, dt);
   postStep(store.all(), dt);
-  for (const pair of detect(store.all())) resolveCollision(pair, store, rand, runState);
+  const sfxSink = { play: (name: string) => sfx.play(name as Parameters<typeof sfx.play>[0]) };
+  for (const pair of detect(store.all())) resolveCollision(pair, store, rand, runState, sfxSink);
   for (const s of store.byKind('ship')) processShipDeath(s, game);
   runState.elapsed += dt;
   updateRunPhase(runState);

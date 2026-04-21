@@ -48,6 +48,129 @@ export function createMockCtx(): MockCtx {
   };
 }
 
+export interface MockAudioEvent {
+  method: string;
+  args: readonly unknown[];
+}
+
+export interface MockOscillator {
+  type: string;
+  frequency: { value: number };
+  events: MockAudioEvent[];
+  started: boolean;
+  stopped: boolean;
+}
+
+export interface MockGain {
+  gain: { value: number };
+  events: MockAudioEvent[];
+}
+
+export interface MockAudioContext {
+  currentTime: number;
+  state: 'running' | 'suspended';
+  destination: object;
+  oscillators: MockOscillator[];
+  gains: MockGain[];
+  closed: boolean;
+  createOscillator(): MockOscillator;
+  createGain(): MockGain;
+  resume(): Promise<void>;
+  close(): Promise<void>;
+}
+
+export function createMockAudioContext(): MockAudioContext {
+  const oscillators: MockOscillator[] = [];
+  const gains: MockGain[] = [];
+  const ctx: MockAudioContext = {
+    currentTime: 0,
+    state: 'running',
+    destination: {},
+    oscillators,
+    gains,
+    closed: false,
+    createOscillator() {
+      const events: MockAudioEvent[] = [];
+      const osc: MockOscillator = {
+        type: 'sine',
+        frequency: {
+          value: 440,
+          setValueAtTime(v: number, t: number) {
+            events.push({ method: 'freq.setValueAtTime', args: [v, t] });
+          },
+          exponentialRampToValueAtTime(v: number, t: number) {
+            events.push({
+              method: 'freq.exponentialRampToValueAtTime',
+              args: [v, t],
+            });
+          },
+          cancelScheduledValues(t: number) {
+            events.push({ method: 'freq.cancelScheduledValues', args: [t] });
+          },
+        } as MockOscillator['frequency'] & Record<string, unknown>,
+        events,
+        started: false,
+        stopped: false,
+        connect(target: object) {
+          events.push({ method: 'connect', args: [target] });
+          return target;
+        },
+        start(t?: number) {
+          events.push({ method: 'start', args: t === undefined ? [] : [t] });
+          osc.started = true;
+        },
+        stop(t?: number) {
+          events.push({ method: 'stop', args: t === undefined ? [] : [t] });
+          osc.stopped = true;
+        },
+      } as unknown as MockOscillator & Record<string, unknown>;
+      oscillators.push(osc);
+      return osc;
+    },
+    createGain() {
+      const events: MockAudioEvent[] = [];
+      const g: MockGain = {
+        gain: {
+          value: 1,
+          setValueAtTime(v: number, t: number) {
+            events.push({ method: 'gain.setValueAtTime', args: [v, t] });
+            g.gain.value = v;
+          },
+          linearRampToValueAtTime(v: number, t: number) {
+            events.push({
+              method: 'gain.linearRampToValueAtTime',
+              args: [v, t],
+            });
+          },
+          exponentialRampToValueAtTime(v: number, t: number) {
+            events.push({
+              method: 'gain.exponentialRampToValueAtTime',
+              args: [v, t],
+            });
+          },
+          cancelScheduledValues(t: number) {
+            events.push({ method: 'gain.cancelScheduledValues', args: [t] });
+          },
+        } as MockGain['gain'] & Record<string, unknown>,
+        events,
+        connect(target: object) {
+          events.push({ method: 'connect', args: [target] });
+          return target;
+        },
+      } as unknown as MockGain & Record<string, unknown>;
+      gains.push(g);
+      return g;
+    },
+    async resume() {
+      ctx.state = 'running';
+    },
+    async close() {
+      ctx.closed = true;
+    },
+  };
+  return ctx;
+}
+
 export interface MockCanvas {
   canvas: HTMLCanvasElement;
   mock: MockCtx;
