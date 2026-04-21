@@ -10,7 +10,7 @@ This is a 2-week vertical-slice MVP being built under **The Cascade** spec-drive
 
 ## Repository Layout
 
-*Target layout. Today, only `docs/`, `specs/`, `research/`, `CLAUDE.md`, and `.gitignore` exist — everything else is scaffolded in Task 1. Do not assume a file is present just because it appears below; check the filesystem.*
+*Target layout. Not every file below exists yet — the tree fills in over Tasks 1-21. Check the filesystem before reading or editing a path.*
 
 ```
 SpaceNerds/
