@@ -203,8 +203,14 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - No page-scroll on arrow keys or space.
   - Test suite covers held, press, release, and blur scenarios.
 - **Verification:** `npm test tests/input.test.ts`
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `createInput(target)` factory returns `{ isDown, justPressed, captureFrame, clear, dispose }`. Indexed by `e.code` (locale-independent: `Space`, `ArrowLeft`, `ShiftLeft`, etc.), not `e.key`.
+  - Two-stage `justPressed`: keydown events push into `pending`; `captureFrame()` atomically swaps `pending` → `framePressed` and clears `pending`. OS autorepeat keydown events are filtered out because the key is already in `held`.
+  - `preventDefault` fires on ArrowLeft/Right/Up/Down, Space, ShiftLeft/Right, Escape — the scroll-hijacking + browser-shortcut set.
+  - Blur listener clears `held`, `pending`, and `framePressed` (E-8 alignment).
+  - `main.ts` now owns a single `Input` instance; `captureFrame()` runs at the top of each sim tick, matching D11 step 1. SPACE and ESC transitions now go through `justPressed`, so a held key only fires one transition.
+  - Vitest runs in Node (no DOM globals). Tests use a tiny `makeKeyEvent` helper that decorates a plain `Event` with `code`/`key` properties — avoids taking a jsdom/happy-dom dep.
 
 ## Task 5: Entity manager + core entity types
 

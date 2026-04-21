@@ -1,4 +1,5 @@
 import { run } from './engine/loop';
+import { createInput } from './engine/input';
 import { createGame, type GameState } from './game';
 import { PALETTE, PLAYFIELD_W, PLAYFIELD_H } from './config';
 
@@ -8,6 +9,7 @@ const ctx = canvas.getContext('2d');
 if (!ctx) throw new Error('no 2d context');
 
 const game = createGame();
+const input = createInput(window);
 
 let viewW = PLAYFIELD_W;
 let viewH = PLAYFIELD_H;
@@ -38,20 +40,13 @@ function resize(): void {
 resize();
 window.addEventListener('resize', resize);
 
-window.addEventListener('keydown', (e) => {
-  if (e.key === ' ' || e.key === 'Escape' || e.key.startsWith('Arrow')) {
-    e.preventDefault();
-  }
-  handleKey(e.key);
-});
-
-function handleKey(key: string): void {
+function handleStateInputs(): void {
   const s = game.state();
-  if (key === ' ' && s === 'TITLE') {
+  if (input.justPressed('Space') && s === 'TITLE') {
     game.transition('PLAY');
     return;
   }
-  if (key === 'Escape') {
+  if (input.justPressed('Escape')) {
     if (s === 'PLAY') game.transition('PAUSED');
     else if (s === 'PAUSED') game.transition('PLAY');
   }
@@ -59,7 +54,8 @@ function handleKey(key: string): void {
 
 run(
   (_dt) => {
-    // no entities yet; Task 5+ hooks into this tick
+    input.captureFrame();
+    handleStateInputs();
   },
   (_alpha) => {
     render();
