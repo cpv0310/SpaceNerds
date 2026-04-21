@@ -179,8 +179,17 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Visual: title screen shows "SPACENERDS" in vector-style text and a "PRESS SPACE TO PLAY" prompt.
   - SPACE transitions TITLE → PLAY. ESC transitions PLAY → PAUSED and back.
 - **Verification:** `npm test` passes the game-loop and state-machine suites; manual: cycle all states.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `src/engine/loop.ts` exposes a pure `createStepper()` (testable with injected `now` timestamps) plus `run()` that wraps it in a `requestAnimationFrame` pump. `TICK_HZ = 60`, `TICK_MS = 1000/60`, tab-blur clamp at 250ms per ADR-007.
+  - `src/game.ts` is a minimal state machine — `createGame()` returns `{ state, transition, canTransition }`. Illegal transitions throw with a descriptive message and leave state unchanged (fail-fast). Legal-transition table is a `Readonly<Record<GameState, readonly GameState[]>>`.
+  - Test coverage: 9 loop tests (no-time, 1-tick, N-ticks, 250ms clamp, alpha range, uniform & jittery 10-second drift both < 2%, constants) + 15 state-machine tests (initial, 7 legal, 7 illegal).
+  - Built `src/config.ts` now with `PLAYFIELD_W/H` and the full `PALETTE` (both are canonical-per-CLAUDE-and-TD and needed for title-screen rendering). Held back every tunable not yet referenced — they land with the task that introduces them.
+  - `main.ts` rewritten: canvas bootstrap, D5-style aspect-preserving resize, SPACE/ESC key handling, `run(tick, render)` with state-dispatched render. Task 7 will replace the inline resize/draw helpers with `render/canvas.ts`; Task 4 replaces the inline keydown listener with `engine/input.ts`.
+  - Text rendering uses the generic `monospace` font as a stand-in. Per D18, Task 19 swaps in Press Start 2P.
+  - Floating-point note: `Math.floor(250 / TICK_MS)` evaluates to 14 because `250 / (1000/60)` is `14.999999…` in IEEE-754; the stepper produces 15 ticks because the 15th `acc >= TICK_MS` check passes. Test asserts the range `[15, 16]` instead of the expression.
+  - Production bundle **1.59 KB gzipped** (was 1.28 KB at end of Task 2). Budget 150 KB. ~94× headroom.
+  - Manual cycling of GAME_OVER and INITIALS_ENTRY paths is deferred to Task 14 (lives/death) — nothing in Task 3 triggers them. State-machine tests cover those transitions exhaustively, so the acceptance criterion "cover all legal transitions" is met by the test suite, not by the UI.
 
 ## Task 4: Input system
 
