@@ -308,8 +308,18 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Hyperspace respects cooldown.
   - Hyperspace death rate = 10% (statistically verified with seeded RNG over 1000 samples, assertion within ±2%).
 - **Verification:** `npm test`; manual: fire & hyperspace repeatedly.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `ship.ts` gained `tryFireBullet(ship, store)` and `tryHyperspace(ship, randFn)`, both cooldown-gated and no-op on dead ship.
+  - `bullet.ts` gained `updateBullet(b, dt)` (decrements `lifeRemaining`, flips `alive=false` at ≤ 0) and `drawBullet(r, b)` (cyan-warm stroke circle).
+  - `controlShip` now ticks down `fireCooldown`, `hyperspaceCooldown`, and `invulnUntil` each frame. Cooldown-tick runs even for dead ships so the same function is safe to call unconditionally.
+  - Bullet velocity is world-frame (`BULLET_SPEED * (cos rot, sin rot)`); ship velocity is explicitly ignored per FR-3.3. Bullet spawns at `ship.radius * 1.4` forward of ship center.
+  - Hyperspace: teleports to random interior point, zeroes velocity + accel accumulators, sets `invulnUntil = max(current, HYPERSPACE_INVULN=2s)`, sets cooldown = 3s, rolls `rand() < 0.10` for death.
+  - **PRNG**: created `src/rand.ts` with mulberry32 (per D14). `setSeed` deterministic, `rand` returns `[0,1)`. Tests seed with `42`; production runs unseeded from `Date.now()`.
+  - **Death-rate statistical test**: 10,000 seeded samples, `|observed − 0.10|` is well under 2% (the seed-42 run is deterministic — it will pass on every CI run).
+  - main.ts: sim tick now fires/hyperspaces on `justPressed` Space/Shift, updates bullets, and renders bullets before the ship so the ship sits on top.
+  - **invulnUntil semantics deviation**: TD specified "world-time timestamp", we use "seconds remaining" decremented each tick (aligned with the cooldown fields). Functionally identical; I'll amend the TD description later.
+  - 11 bullet tests + 7 hyperspace tests; all 119 previously-passing tests remain green.
 
 ## Task 10: Asteroid system (3-tier split)
 

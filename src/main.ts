@@ -7,8 +7,16 @@ import {
   controlShip,
   shipAccel,
   drawShip,
+  tryFireBullet,
+  tryHyperspace,
   type Ship,
 } from './entities/ship';
+import {
+  updateBullet,
+  drawBullet,
+  type Bullet,
+} from './entities/bullet';
+import { rand } from './rand';
 import { createGame, type GameState } from './game';
 import { createRenderer, type Renderer } from './render/canvas';
 import { PALETTE, PLAYFIELD_W, PLAYFIELD_H, SHIP_MAX_SPEED } from './config';
@@ -48,9 +56,16 @@ function handleStateInputs(): void {
 }
 
 function simulate(dt: number): void {
-  for (const s of store.byKind('ship')) controlShip(s, input, dt);
+  for (const ship of store.byKind('ship')) {
+    controlShip(ship, input, dt);
+    if (input.justPressed('Space')) tryFireBullet(ship, store);
+    if (input.justPressed('ShiftLeft') || input.justPressed('ShiftRight')) {
+      tryHyperspace(ship, rand);
+    }
+  }
   integrate(store.all(), dt, accelFor);
   for (const s of store.byKind('ship')) clampMaxSpeed(s, SHIP_MAX_SPEED);
+  for (const b of store.byKind('bullet')) updateBullet(b, dt);
   postStep(store.all(), dt);
   store.compact();
 }
@@ -95,6 +110,7 @@ function renderTitle(r: Renderer): void {
 }
 
 function renderScene(r: Renderer): void {
+  for (const b of store.byKind('bullet')) drawBullet(r, b as Bullet);
   for (const s of store.byKind('ship')) drawShip(r, s as Ship);
 }
 

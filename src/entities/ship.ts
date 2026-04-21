@@ -1,12 +1,21 @@
 import { type CoreEntity, type Point, initCore } from './core';
 import type { Renderer } from '../render/canvas';
 import type { Input } from '../engine/input';
+import type { EntityStore } from '../engine/entities';
+import type { Bullet } from './bullet';
 import {
   SHIP_RADIUS,
   SHIP_STARTING_LIVES,
   RESPAWN_INVULN,
   SHIP_ROTATION_SPEED,
   SHIP_THRUST_ACCEL,
+  SHIP_FIRE_COOLDOWN,
+  BULLET_SPEED,
+  HYPERSPACE_COOLDOWN,
+  HYPERSPACE_DEATH_RISK,
+  HYPERSPACE_INVULN,
+  PLAYFIELD_W,
+  PLAYFIELD_H,
   PALETTE,
 } from '../config';
 
@@ -32,6 +41,9 @@ export function createShip(x: number, y: number): Ship {
 }
 
 export function controlShip(ship: Ship, input: Input, dt: number): void {
+  if (ship.fireCooldown > 0) ship.fireCooldown = Math.max(0, ship.fireCooldown - dt);
+  if (ship.hyperspaceCooldown > 0) ship.hyperspaceCooldown = Math.max(0, ship.hyperspaceCooldown - dt);
+  if (ship.invulnUntil > 0) ship.invulnUntil = Math.max(0, ship.invulnUntil - dt);
   if (!ship.alive) {
     ship.thrusting = false;
     return;
@@ -40,6 +52,36 @@ export function controlShip(ship: Ship, input: Input, dt: number): void {
   const left = input.isDown('ArrowLeft') || input.isDown('KeyA') ? 1 : 0;
   ship.rot += (right - left) * SHIP_ROTATION_SPEED * dt;
   ship.thrusting = input.isDown('ArrowUp') || input.isDown('KeyW');
+}
+
+export function tryFireBullet(ship: Ship, store: EntityStore): Bullet | null {
+  if (!ship.alive || ship.fireCooldown > 0) return null;
+  const noseX = ship.x + Math.cos(ship.rot) * ship.radius * 1.4;
+  const noseY = ship.y + Math.sin(ship.rot) * ship.radius * 1.4;
+  const bullet = store.spawnBullet(noseX, noseY, ship.rot, 'ship');
+  bullet.vx = Math.cos(ship.rot) * BULLET_SPEED;
+  bullet.vy = Math.sin(ship.rot) * BULLET_SPEED;
+  ship.fireCooldown = SHIP_FIRE_COOLDOWN;
+  return bullet;
+}
+
+export function tryHyperspace(ship: Ship, randFn: () => number): boolean {
+  if (!ship.alive || ship.hyperspaceCooldown > 0) return false;
+  ship.x = randFn() * PLAYFIELD_W;
+  ship.y = randFn() * PLAYFIELD_H;
+  ship.vx = 0;
+  ship.vy = 0;
+  ship.ax = 0;
+  ship.ay = 0;
+  ship.ax_prev = 0;
+  ship.ay_prev = 0;
+  ship.invulnUntil = Math.max(ship.invulnUntil, HYPERSPACE_INVULN);
+  ship.hyperspaceCooldown = HYPERSPACE_COOLDOWN;
+  if (randFn() < HYPERSPACE_DEATH_RISK) {
+    ship.alive = false;
+    return true;
+  }
+  return false;
 }
 
 export function shipAccel(ship: Ship): [number, number] {

@@ -1,5 +1,6 @@
 import { type CoreEntity, initCore } from './core';
-import { BULLET_RADIUS, BULLET_LIFE } from '../config';
+import type { Renderer } from '../render/canvas';
+import { BULLET_RADIUS, BULLET_LIFE, PALETTE } from '../config';
 
 export type BulletSource = 'ship' | 'fighter';
 
@@ -22,4 +23,15 @@ export function createBullet(
     source,
     lifeRemaining: BULLET_LIFE,
   };
+}
+
+export function updateBullet(b: Bullet, dt: number): void {
+  if (!b.alive) return;
+  b.lifeRemaining -= dt;
+  if (b.lifeRemaining <= 0) b.alive = false;
+}
+
+export function drawBullet(r: Renderer, b: Bullet): void {
+  if (!b.alive) return;
+  r.strokeCircle(b.x, b.y, b.radius, PALETTE.bullet);
 }
