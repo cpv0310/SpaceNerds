@@ -1,4 +1,5 @@
 import { respawnShip, type Ship } from './entities/ship';
+import { ONBOARDING_GRACE_SEC } from './config';
 
 export type GameState =
   | 'TITLE'
@@ -6,6 +7,28 @@ export type GameState =
   | 'PAUSED'
   | 'GAME_OVER'
   | 'INITIALS_ENTRY';
+
+export type RunPhase = 'onboarding' | 'active';
+
+export interface RunState {
+  score: number;
+  asteroidsBroken: number;
+  enemyKills: number;
+  phase: RunPhase;
+  phaseSwitchAt: number;
+  elapsed: number;
+}
+
+export function createRunState(): RunState {
+  return {
+    score: 0,
+    asteroidsBroken: 0,
+    enemyKills: 0,
+    phase: 'onboarding',
+    phaseSwitchAt: ONBOARDING_GRACE_SEC,
+    elapsed: 0,
+  };
+}
 
 const LEGAL: Readonly<Record<GameState, readonly GameState[]>> = {
   TITLE: ['PLAY'],

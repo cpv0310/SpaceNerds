@@ -39,8 +39,15 @@ import {
   type Fighter,
 } from './entities/fighter';
 import { rand, randRange } from './rand';
-import { createGame, processShipDeath, type GameState } from './game';
+import {
+  createGame,
+  createRunState,
+  processShipDeath,
+  type GameState,
+  type RunState,
+} from './game';
 import { createRenderer, type Renderer } from './render/canvas';
+import { drawHud } from './render/hud';
 import {
   PALETTE,
   PLAYFIELD_W,
@@ -60,6 +67,7 @@ window.addEventListener('resize', () => renderer.resize());
 const game = createGame();
 const input = createInput(window);
 const store = createStore();
+let runState: RunState = createRunState();
 
 const BLACK_HOLE_MIN_SHIP_DIST = 250;
 
@@ -80,6 +88,7 @@ function placeBlackHole(shipX: number, shipY: number): void {
 
 function startRun(): void {
   store.clear();
+  runState = createRunState();
   const ship = store.spawnShip(PLAYFIELD_W / 2, PLAYFIELD_H / 2);
   placeBlackHole(ship.x, ship.y);
   spawnInitialAsteroids(store, ship.x, ship.y);
@@ -151,8 +160,9 @@ function simulate(dt: number): void {
   for (const a of store.byKind('asteroid')) updateAsteroid(a, dt);
   for (const bh of store.byKind('blackhole')) updateBlackHole(bh as BlackHole, dt);
   postStep(store.all(), dt);
-  for (const pair of detect(store.all())) resolveCollision(pair, store, rand);
+  for (const pair of detect(store.all())) resolveCollision(pair, store, rand, runState);
   for (const s of store.byKind('ship')) processShipDeath(s, game);
+  runState.elapsed += dt;
   store.compact();
 
   fighterSpawnTimer -= dt;
@@ -210,6 +220,8 @@ function renderScene(r: Renderer): void {
   for (const f of store.byKind('fighter')) drawFighter(r, f as Fighter);
   for (const b of store.byKind('bullet')) drawBullet(r, b as Bullet);
   for (const s of store.byKind('ship')) drawShip(r, s as Ship);
+  const ship = store.byKind('ship')[0];
+  drawHud(r, runState, ship ? ship.lives : 0);
 }
 
 function renderPausedOverlay(r: Renderer): void {
@@ -225,7 +237,14 @@ function renderPausedOverlay(r: Renderer): void {
 
 function renderGameOver(r: Renderer): void {
   renderScene(r);
-  r.text('GAME OVER', r.width() / 2, r.height() / 2 - 30, PALETTE.fighter, 56);
+  r.text('GAME OVER', r.width() / 2, r.height() / 2 - 60, PALETTE.fighter, 56);
+  r.text(
+    `FINAL SCORE ${runState.score}`,
+    r.width() / 2,
+    r.height() / 2 - 10,
+    PALETTE.hud,
+    26
+  );
   r.text(
     'PRESS SPACE TO PLAY AGAIN',
     r.width() / 2,

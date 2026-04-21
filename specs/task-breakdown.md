@@ -458,8 +458,15 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Lives HUD updates on death and respawn.
   - No double-score on same-frame multi-bullet hits (per E-13).
 - **Verification:** `npm test tests/scoring.test.ts`; manual.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `RunState` now lives in `src/game.ts` per TD § Run state — `score`, `asteroidsBroken`, `enemyKills`, `phase`, `phaseSwitchAt`, `elapsed`. `createRunState()` factory matches onboarding defaults (Task 16 will gate spawners on `phase`).
+  - Scoring constants landed in config: `SCORE_ASTEROID_LARGE=20`, `SCORE_ASTEROID_MEDIUM=50`, `SCORE_ASTEROID_SMALL=100`, `SCORE_FIGHTER=200` (OQ-5 starters; Task 20 tunes).
+  - `resolveCollision(c, store, randFn, runState?)` takes an optional `runState`. Scoring runs only on ship-bullet-kills-asteroid/fighter pairs. Friendly fire and fighter-vs-asteroid (E-6) and black-hole consumption award no points. `runState` is optional to keep the existing 24 collision tests green without touching them.
+  - **E-13 double-award avoidance** is already structural: `resolveCollision` early-returns when either entity is already dead, so a second bullet on a dead asteroid doesn't hit the scoring branch.
+  - `src/render/hud.ts` draws `SCORE <N>` in HUD cyan, top-left, and three small ship silhouettes top-right (bright = remaining life, dim ring color = lost life). Lives render as miniature 4-point hulls, nose-right so the vector shape reads at 14 px scale.
+  - main.ts: `runState = createRunState()` on `startRun()`; HUD renders in `renderScene` so it appears in PLAY / PAUSED / GAME_OVER. `elapsed` ticks during sim; resolveCollision now receives `runState`. GAME_OVER overlay now shows `FINAL SCORE <N>`.
+  - 7 scoring tests + 4 HUD tests.
 
 ## Task 16: Onboarding grace window
 

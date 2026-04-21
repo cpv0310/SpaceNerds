@@ -42,6 +42,13 @@ export const FIGHTER_BULLET_SPEED = 500;
 export const FIGHTER_APPROACH_DIST = 400;
 export const FIGHTER_RETREAT_DIST = 150;
 
+export const SCORE_ASTEROID_LARGE = 20;
+export const SCORE_ASTEROID_MEDIUM = 50;
+export const SCORE_ASTEROID_SMALL = 100;
+export const SCORE_FIGHTER = 200;
+
+export const ONBOARDING_GRACE_SEC = 25;
+
 export const PALETTE = {
   ship: '#ff2fcf',
   bullet: '#fffbe6',
