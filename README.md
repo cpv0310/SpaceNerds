@@ -66,4 +66,4 @@ The project follows [The Cascade](https://github.com/cpv0310) — small waterfal
 
 ## Author
 
-Chris Petit ([@cpv0310](https://github.com/cpv0310)) — Skunkwerks personal OSS umbrella.
+Chris Van Dyke ([@cpv0310](https://github.com/cpv0310)) — Skunkwerks personal OSS umbrella.

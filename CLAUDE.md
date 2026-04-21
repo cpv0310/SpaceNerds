@@ -294,6 +294,6 @@ Do not guess at architecture. Do not make up tuning values — use the starters 
 
 ## Key People / References
 
-- **Owner:** Chris Petit (GitHub: `cpv0310`)
+- **Owner:** Chris Van Dyke (GitHub: `cpv0310`)
 - **Entity:** Skunkwerks (personal OSS umbrella)
 - **Methodology:** The Cascade — small waterfalls done in sprints. Spec is the product, code is a derivative.

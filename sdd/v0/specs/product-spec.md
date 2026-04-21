@@ -21,7 +21,7 @@ related:
 
 ## Problem Statement
 
-Chris Petit (Skunkwerks) wants to ship a playable, portfolio-grade, web-first arcade game in 2 weeks of evening work that (a) proves the Skunkwerks ethos of small, opinionated, craft-quality software, (b) serves as a tangible output of the Cascade development methodology, and (c) establishes an aesthetic and technical foundation that can be expanded over subsequent passes into the fully-designed game without rewrites.
+Chris Van Dyke (Skunkwerks) wants to ship a playable, portfolio-grade, web-first arcade game in 2 weeks of evening work that (a) proves the Skunkwerks ethos of small, opinionated, craft-quality software, (b) serves as a tangible output of the Cascade development methodology, and (c) establishes an aesthetic and technical foundation that can be expanded over subsequent passes into the fully-designed game without rewrites.
 
 **Target player:** 30- to 50-year-old web visitors with nostalgia for 1980s vector-arcade games (Asteroids, Tempest, Gravitar, Battlezone), roguelike enthusiasts who appreciate pure permadeath runs, and casual visitors drawn by the aesthetic who want a clear 5-minute score-chase loop.
 
