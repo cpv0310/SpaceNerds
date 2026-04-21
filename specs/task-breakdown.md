@@ -359,8 +359,15 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - All 9 collision cases from Technical Design § Collision Resolution are unit-tested.
   - Edge cases E-1 through E-14 that involve collisions are each a dedicated test.
 - **Verification:** `npm test tests/collision.test.ts`
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - **Detection** (`src/engine/collision.ts`): pure. `detect(entities)` runs O(n²) circle-circle with broadphase-narrowphase collapsed (we're at n≤35). Particles are skipped. Pairs are emitted with the kind-ordered canonical form per `KIND_ORDER` — `asteroid(0) < blackhole(1) < bullet(2) < fighter(3) < particle(4) < ship(5)` — so `(a.kind, b.kind)` in the returned pair is always in alphabetical-by-order-index order.
+  - **Resolution** (`src/engine/resolve.ts`): the dispatch table keys off `"${a.kind}:${b.kind}"`. 9 cases ship, aligned to TD § Collision Resolution. Both-dead pair is a no-op (matters for E-13 replay during the resolve loop).
+  - **Invulnerability rule**: `invulnUntil > 0` blocks asteroid/fighter/fighter-bullet damage (E-5). It does NOT block black-hole event-horizon death (E-1). Invulnerable-ship-vs-fighter kills the fighter but spares the ship (matches classic arcade "ram with shields" feel).
+  - **Friendly fire**: ship bullet vs ship is silently ignored; fighter bullet vs fighter likewise. Tested explicitly. Bullet-spawn-at-nose clearance (Task 9) handles the common case of freshly-fired bullet overlapping its own ship.
+  - **Edge cases tested**: E-1 (BH horizon ignores invuln), E-5 (invuln + asteroid, invuln + fighter bullet, invuln + fighter-ram), E-6 (fighter-asteroid mutual destruction, no score), E-13 (second bullet on already-dead asteroid is a no-op, bullet survives). E-2 (split-in-gravity), E-8 (tab blur), E-14 (hyperspace-same-frame-as-death) are ordering concerns handled by the tick sequence, not this module.
+  - **main.ts wiring**: `detect(store.all())` runs after `postStep`; each pair routed to `resolveCollision` before `compact()`. Put a first bullet through a large asteroid and you'll see 2 mediums pop out.
+  - 24 collision tests: 6 geometry (overlap / touch / separated / dead / particle-exclude / ordering), 9 pair-kind detection, 9 resolution-case, 6 edge-case. 163 tests total green.
 
 ## Task 12: Black hole — gravity + event horizon + visible influence ring
 

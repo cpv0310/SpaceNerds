@@ -2,6 +2,8 @@ import { run } from './engine/loop';
 import { createInput } from './engine/input';
 import { createStore } from './engine/entities';
 import { integrate, clampMaxSpeed, postStep } from './engine/physics';
+import { detect } from './engine/collision';
+import { resolveCollision } from './engine/resolve';
 import type { CoreEntity } from './entities/core';
 import {
   controlShip,
@@ -75,6 +77,7 @@ function simulate(dt: number): void {
   for (const b of store.byKind('bullet')) updateBullet(b, dt);
   for (const a of store.byKind('asteroid')) updateAsteroid(a, dt);
   postStep(store.all(), dt);
+  for (const pair of detect(store.all())) resolveCollision(pair, store, rand);
   store.compact();
 }
 
