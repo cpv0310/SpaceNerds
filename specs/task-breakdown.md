@@ -243,8 +243,15 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Circular-orbit test: simulate a test particle in a simple gravity well for 10 seconds; assert orbital radius does not drift > 5%.
   - Max-speed clamp applies via vector norm, not axis-aligned.
 - **Verification:** `npm test tests/physics.test.ts`
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - Exports: `integrate(entities, dt, accelFn)`, `postStep(entities, dt)`, `wrapPlayfield(e, w, h)`, `clampMaxSpeed(e, max)`, `AccelFn` type.
+  - **Integrator:** kick-drift-kick Velocity Verlet with `accelFn` called twice per tick (once for a(t), once for a(t+dt)). Exact for constant accel at any `dt` (test confirms drop test is at the FP floor), bounded energy error on circular orbit (test: drift 0.00% over 10s — KDK is symplectic).
+  - **Deviation from D11 / D2:** the canonical tick order had `applyGravity` as a separate step *before* `integrate`. That ordering only gives you a(t) at x(t) — not a(t+dt) at x(t+dt) — which forces a semi-implicit-Euler integrator with O(t·dt) error (~4 px drift at 5s, a=100, dt=1/60). Moving the accel computation *inside* `integrate` is what makes it true Verlet. `ship.control` and gravity will therefore live inside the `accelFn` closure passed to `integrate`, not as pre-integrate tick steps. `ax/ay/ax_prev/ay_prev` fields stay — now they cache the latest computed accel across frames (useful for rendering thrust trails and for debug readouts).
+  - `wrapPlayfield` defaults to 1280×720 (logical playfield per FR-4.2) but takes explicit w/h for tests.
+  - `clampMaxSpeed` uses vector-magnitude scaling per D6 (tested explicitly — preserves direction, not axis-aligned).
+  - `postStep` advances `age` and wraps. Max-speed clamp is NOT in postStep — it's per-kind and callers invoke `clampMaxSpeed` directly (ship/fighter only, per D6).
+  - 16 tests: zero-force, constant-force (two dt values), circular orbit drift, dead-entity skip, clamp above/at/below cap + direction preservation, wrap in four directions, postStep age/wrap/alive-gating.
 
 ## Task 7: Rendering — Canvas 2D line primitives
 
