@@ -54,6 +54,7 @@ import {
 import { createRenderer, type Renderer } from './render/canvas';
 import { drawHud } from './render/hud';
 import { createSfx } from './audio/sfx';
+import { createPersist, type Saved } from './persist';
 import {
   PALETTE,
   PLAYFIELD_W,
@@ -72,6 +73,9 @@ const game = createGame();
 const input = createInput(window);
 const store = createStore();
 const sfx = createSfx();
+const persist = createPersist();
+let saved: Saved = persist.load();
+sfx.setMuted(saved.muted);
 let runState: RunState = createRunState();
 let spawnTimers: SpawnTimers = createSpawnTimers();
 let thrustingLastTick = false;
@@ -128,11 +132,18 @@ function accelFor(e: CoreEntity): [number, number] {
 function handleStateInputs(): void {
   const s = game.state();
   if (input.justPressed('KeyM')) {
-    sfx.setMuted(!sfx.isMuted());
+    const next = !sfx.isMuted();
+    sfx.setMuted(next);
+    saved = persist.setMuted(saved, next);
+    persist.save(saved);
   }
   if (input.justPressed('Space')) {
     if (s === 'TITLE') {
-      if (!sfx.isInitialized()) void sfx.init();
+      if (!sfx.isInitialized()) {
+        void sfx.init().then(() => sfx.setMuted(saved.muted));
+      }
+      saved = persist.incrementRunCount(saved);
+      persist.save(saved);
       startRun();
       game.transition('PLAY');
       return;
@@ -226,9 +237,20 @@ function render(): void {
 function renderTitle(r: Renderer): void {
   const cx = r.width() / 2;
   const h = r.height();
-  r.text('SPACENERDS', cx, h * 0.38, PALETTE.ship, 72);
-  r.text('DEFEND THE GAMMA SECTOR', cx, h * 0.5, PALETTE.asteroid, 20);
-  r.text('PRESS SPACE TO PLAY', cx, h * 0.66, PALETTE.hud, 28);
+  r.text('SPACENERDS', cx, h * 0.32, PALETTE.ship, 72);
+  r.text('DEFEND THE GAMMA SECTOR', cx, h * 0.44, PALETTE.asteroid, 20);
+  const best = saved.highScores[0];
+  const hs = best ? `HIGH SCORE  ${best.initials} ${best.score}` : 'HIGH SCORE  ---';
+  r.text(hs, cx, h * 0.54, PALETTE.hud, 22);
+  r.text('PRESS SPACE TO PLAY', cx, h * 0.68, PALETTE.hud, 28);
+  r.text(
+    'ARROWS ROTATE  UP THRUSTS  SPACE FIRES  SHIFT HYPERSPACE  M MUTE',
+    cx,
+    h * 0.8,
+    PALETTE.ring,
+    14
+  );
+  if (sfx.isMuted()) r.text('[ MUTED ]', cx, h * 0.86, PALETTE.fighter, 14);
 }
 
 function renderScene(r: Renderer): void {

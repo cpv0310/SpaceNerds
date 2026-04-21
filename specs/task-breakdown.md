@@ -538,8 +538,20 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Mute state persists via `Saved.muted`.
   - Unit test with mocked `localStorage`.
 - **Verification:** `npm test tests/persist.test.ts`; manual: play, get high score, reload, verify.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `src/persist.ts`: `createPersist(storage)` factory with dependency-injected `StorageLike` (defaults to `globalThis.localStorage`; tests pass a mock; prod falls through to real `localStorage`).
+  - Exports: `Saved` shape (version/highScores/runCount/muted), `load()`, `save()`, `addHighScore(saved, initials, score)`, `setMuted(saved, muted)`, `incrementRunCount(saved)`, plus top-level `isHighScore(saved, score)`. All mutators are immutable — they return a new `Saved`.
+  - **Validation on load**: JSON.parse + `validate()` pass. Bad JSON → defaults. Non-object payload → defaults. Malformed entries in `highScores[]` are filtered out (not valid `{initials:string, score:number}` → dropped). Initials uppercase-and-clamp-to-3. Scores clamped to non-negative integers. Sorted desc, sliced to TOP_N.
+  - **Quota + private mode silent-fail**: setItem wrapped in try/catch. null `storage` (private mode, disabled) is handled by every operation — load returns defaults, save is no-op.
+  - `isHighScore(saved, score)`: `true` if list < 10 and score > 0; otherwise `score > highScores[9].score`.
+  - **main.ts wiring**:
+    - `saved = persist.load()` at boot; `sfx.setMuted(saved.muted)` immediately applies.
+    - `M` key toggle updates saved.muted + calls `persist.save`.
+    - `SPACE` from TITLE increments `runCount` and saves before starting the run.
+    - Title screen now renders top high score (`HIGH SCORE AAA 1000` or `---` when empty), control legend, and `[ MUTED ]` badge when muted.
+  - Task 19 will add initials-entry-on-high-score and the top-10 leaderboard view. Task 18 only ships the storage layer + top-entry display.
+  - 20 persist tests: load defaults (empty, null storage, corrupt, non-object, malformed entries), save round-trip (normal, quota-fail, null storage), addHighScore (add, clamp initials, pad short, sort, cap+evict, immutability), isHighScore (< 10, beats 10th, ties 10th, zero/negative), setMuted + incrementRunCount.
 
 ## Task 19: Title screen + Game Over + Initials entry
 
