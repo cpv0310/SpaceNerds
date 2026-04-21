@@ -564,8 +564,18 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - INITIALS_ENTRY accepts 3 letters, confirms with SPACE, cancels with ESC (records "AAA").
   - All screens are vector-only, no images.
 - **Verification:** `npm test`; manual: play through full cycle.
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - Three screen modules under `src/screens/`:
+    - `title.ts`: `drawTitleScreen(r, saved, muted)` — game title, tagline, top-5 leaderboard (or `---` when empty), SPACE prompt, control legend, `[ MUTED ]` badge. Top entry highlighted in ship-pink.
+    - `gameover.ts`: `drawGameOverOverlay(r, finalScore, isNewHighScore)` — two branches on the HS flag: plain "PRESS SPACE TO PLAY AGAIN" vs "NEW HIGH SCORE / PRESS SPACE TO ENTER INITIALS". Drawn *over* the frozen scene in main.ts.
+    - `initials.ts`: `createInitialsState()` + `tickInitialsInput(state, input)` + `drawInitialsEntry(r, state, score)`. Per FR-12.6: Left/Right arrows (and A/D aliases) cycle A–Z at the current cursor position; SPACE confirms a letter (advances cursor; at cursor=2 it emits `'submit'`); ESC per D12 resets to `AAA` and emits `'submit'`. An underscore bar under the active letter cues the cursor.
+  - State-flow wiring in `main.ts`:
+    - `GAME_OVER + SPACE + isHighScore(saved, score)` → `INITIALS_ENTRY` (resets initials state first).
+    - `GAME_OVER + SPACE + !isHighScore` → `TITLE` (no leaderboard write).
+    - `INITIALS_ENTRY` runs `tickInitialsInput` each tick. On `submit`, `addHighScore(saved, letters, runState.score)` + `persist.save` + resets initials + transitions back to `TITLE`.
+  - **Press Start 2P web font (D18) deferred** — adding a Google Fonts link is a network dependency and CSP concern. Keeping `monospace` fallback; Task 21 can bundle a self-hosted woff2 if desired. Text stays legible in the meantime.
+  - 16 screen tests: 10 initials-state (start, cycle fwd/back with wrap, SPACE cursor advance, SPACE submit at end, ESC submit-as-AAA, per-position cycling, reset helper, KeyA/KeyD aliases); 3 title-render (empty `---`, top-5 cap, MUTED badge); 2 initials-render (labels + 3 letters); 3 game-over-render (score, play-again prompt, high-score prompt).
 
 ## Task 20: Playtest pass + tuning
 

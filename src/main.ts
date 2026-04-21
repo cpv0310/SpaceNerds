@@ -54,7 +54,15 @@ import {
 import { createRenderer, type Renderer } from './render/canvas';
 import { drawHud } from './render/hud';
 import { createSfx } from './audio/sfx';
-import { createPersist, type Saved } from './persist';
+import { createPersist, isHighScore, type Saved } from './persist';
+import { drawTitleScreen } from './screens/title';
+import { drawGameOverOverlay } from './screens/gameover';
+import {
+  createInitialsState,
+  resetInitialsState,
+  tickInitialsInput,
+  drawInitialsEntry,
+} from './screens/initials';
 import {
   PALETTE,
   PLAYFIELD_W,
@@ -79,6 +87,7 @@ sfx.setMuted(saved.muted);
 let runState: RunState = createRunState();
 let spawnTimers: SpawnTimers = createSpawnTimers();
 let thrustingLastTick = false;
+const initialsState = createInitialsState();
 
 const BLACK_HOLE_MIN_SHIP_DIST = 250;
 
@@ -137,6 +146,19 @@ function handleStateInputs(): void {
     saved = persist.setMuted(saved, next);
     persist.save(saved);
   }
+
+  if (s === 'INITIALS_ENTRY') {
+    const ev = tickInitialsInput(initialsState, input);
+    if (ev === 'submit') {
+      const initials = initialsState.letters.join('');
+      saved = persist.addHighScore(saved, initials, runState.score);
+      persist.save(saved);
+      resetInitialsState(initialsState);
+      game.transition('TITLE');
+    }
+    return;
+  }
+
   if (input.justPressed('Space')) {
     if (s === 'TITLE') {
       if (!sfx.isInitialized()) {
@@ -149,7 +171,13 @@ function handleStateInputs(): void {
       return;
     }
     if (s === 'GAME_OVER') {
-      game.transition('TITLE');
+      sfx.stopThrust();
+      if (isHighScore(saved, runState.score)) {
+        resetInitialsState(initialsState);
+        game.transition('INITIALS_ENTRY');
+      } else {
+        game.transition('TITLE');
+      }
       return;
     }
   }
@@ -235,22 +263,7 @@ function render(): void {
 }
 
 function renderTitle(r: Renderer): void {
-  const cx = r.width() / 2;
-  const h = r.height();
-  r.text('SPACENERDS', cx, h * 0.32, PALETTE.ship, 72);
-  r.text('DEFEND THE GAMMA SECTOR', cx, h * 0.44, PALETTE.asteroid, 20);
-  const best = saved.highScores[0];
-  const hs = best ? `HIGH SCORE  ${best.initials} ${best.score}` : 'HIGH SCORE  ---';
-  r.text(hs, cx, h * 0.54, PALETTE.hud, 22);
-  r.text('PRESS SPACE TO PLAY', cx, h * 0.68, PALETTE.hud, 28);
-  r.text(
-    'ARROWS ROTATE  UP THRUSTS  SPACE FIRES  SHIFT HYPERSPACE  M MUTE',
-    cx,
-    h * 0.8,
-    PALETTE.ring,
-    14
-  );
-  if (sfx.isMuted()) r.text('[ MUTED ]', cx, h * 0.86, PALETTE.fighter, 14);
+  drawTitleScreen(r, saved, sfx.isMuted());
 }
 
 function renderScene(r: Renderer): void {
@@ -276,25 +289,11 @@ function renderPausedOverlay(r: Renderer): void {
 
 function renderGameOver(r: Renderer): void {
   renderScene(r);
-  r.text('GAME OVER', r.width() / 2, r.height() / 2 - 60, PALETTE.fighter, 56);
-  r.text(
-    `FINAL SCORE ${runState.score}`,
-    r.width() / 2,
-    r.height() / 2 - 10,
-    PALETTE.hud,
-    26
-  );
-  r.text(
-    'PRESS SPACE TO PLAY AGAIN',
-    r.width() / 2,
-    r.height() / 2 + 40,
-    PALETTE.hud,
-    20
-  );
+  drawGameOverOverlay(r, runState.score, isHighScore(saved, runState.score));
 }
 
 function renderInitialsEntry(r: Renderer): void {
-  r.text('ENTER INITIALS', r.width() / 2, r.height() / 2, PALETTE.hud, 40);
+  drawInitialsEntry(r, initialsState, runState.score);
 }
 
 function renderDebugBadge(r: Renderer, s: GameState): void {
