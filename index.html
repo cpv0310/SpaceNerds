@@ -2,7 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none'"
+    />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="SpaceNerds — vector-graphics arcade roguelike. Defend the Gamma Sector." />
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="robots" content="index,follow" />
     <title>SpaceNerds</title>
     <style>
       html, body {
@@ -11,11 +19,18 @@
         height: 100%;
         background: #000;
         overflow: hidden;
+        color: #65ffe0;
+        font-family: monospace;
       }
       canvas#game {
         display: block;
-        width: 100vw;
-        height: 100vh;
+        margin: 0 auto;
+        image-rendering: pixelated;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     </style>
   </head>

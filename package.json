@@ -6,11 +6,12 @@
   "description": "Web-only arcade roguelike in the Asteroids lineage. Vector graphics, synth audio, Newtonian zero-g physics, permadeath.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run check:aesthetic && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:aesthetic": "node scripts/check-aesthetic.mjs"
   },
   "devDependencies": {
     "typescript": "^5.4.5",
