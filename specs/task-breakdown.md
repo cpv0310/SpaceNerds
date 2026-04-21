@@ -223,8 +223,14 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - `byKind('asteroid')` returns only asteroids.
   - Test coverage: spawn, despawn, compaction, round-trip through clear().
 - **Verification:** `npm test tests/entities.test.ts`
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - `src/entities/core.ts` holds `CoreEntity` + `initCore(x, y, radius)`. One kind-per-file for Ship/Asteroid/Bullet/Fighter/BlackHole/Particle, each exporting a plain typed constructor.
+  - **Deviation from D2:** added `ax: number; ay: number` accumulator fields to `CoreEntity` (D2 specified only `ax_prev/ay_prev`). Rationale: D11 separates `applyGravity` and `ship.control` from `integrate`, which implies a per-entity accel accumulator — otherwise thrust + gravity would have to be combined inline in `integrate`. Keeping `ax/ay` as the "accel accumulated this tick" and `ax_prev/ay_prev` as "saved for next Verlet half-kick" is the cleanest mapping. Will amend D2 in grill-me-decisions at the end of Phase 3 or sooner if this bites us.
+  - Store is a factory `createStore()` returning per-kind pools. `all()` concatenates; `byKind(k)` returns the live pool with a generic-typed return so `byKind('ship')` gives `Ship[]`, etc.
+  - `despawn(e)` flips `alive=false` only; `compact()` does the in-place swap-compact sweep per pool (order-preserving — tested). `clear()` empties all pools.
+  - Added the D4 collision-radii constants and a few spawn defaults (`SHIP_STARTING_LIVES`, `RESPAWN_INVULN`, `BULLET_LIFE`, `BH_G/R_MIN/R_MAX_INFLUENCE`) to `config.ts` since constructors read them.
+  - 14 tests covering each spawn, `all()`/`byKind()`, despawn-then-compact, order preservation, clear, and round-trip spawn-clear-spawn.
 
 ## Task 6: Physics — Velocity Verlet integrator
 
