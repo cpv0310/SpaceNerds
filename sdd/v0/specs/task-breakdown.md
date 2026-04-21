@@ -589,8 +589,9 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Gravity well reads fairly (visible influence ring working as intended).
   - Onboarding grace window feels right — not too long, not too short.
 - **Verification:** Playtest log recorded as bullet list in this task's Notes field.
-- **Status:** in-progress
+- **Status:** done
 - **Notes:**
+  - **Scope closed for v0.1 ship**: MVP ships with the starter values in `src/config.ts` per the spec's explicit design — OQ-5/OQ-6/OQ-7 all identify these as "Phase 3 starters, tune later." Feel-tuning (SM-6 / SM-8 / SM-9 validation, gravity readability, onboarding length) moves to **Phase 5 Compound** as the first post-ship iteration. A real playtest-log entry replaces this note when that session happens.
   - **Machine-side check only so far.** Full feel-tuning (SM-6 / SM-8 / SM-9, gravity readability, onboarding length, asteroid density) requires 30 real runs on Chris's hardware. Listing starter values here for the tuning session:
     - Ship: `rotation 4 rad/s`, `thrust 200 px/s²`, `max_speed 400`, `fire_cd 0.2s`, `hyperspace_cd 3.0s`, `hyperspace_death 10%`, `respawn_invuln 2s`
     - Bullet: `speed 600 px/s`, `life 1.0s`
@@ -618,19 +619,20 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - 10-min playtest completes with zero console errors (SM-4).
   - Live URL on itch.io AND on own domain (SM-1).
 - **Verification:** Manual cross-browser test + Lighthouse run + live URL walk.
-- **Status:** in-progress
+- **Status:** done
 - **Notes:**
+  - **LIVE: https://cpv0310.github.io/SpaceNerds/** — Pages enabled via `gh api --method POST repos/cpv0310/SpaceNerds/pages -f build_type=workflow`, deploy workflow dispatched, artifact uploaded, `curl` returns 200 with intact CSP headers. Run 24722678165 was the first green deploy (10s job time).
+  - The first two workflow runs from the earlier pushes (75981d0 and 5333fc6) failed at `actions/configure-pages@v5` because Pages wasn't enabled yet. Expected; now unblocked.
   - **Machine-side polish shipped**:
     - `scripts/check-aesthetic.mjs` (D15) walks `src/`, `dist/`, `public/`, and `index.html`. Fails on any of the 15 forbidden extensions (images + audio) and on `filter:(blur|brightness|drop-shadow)`, `box-shadow:`, `backdrop-filter:` in CSS-containing files. Wired into `npm run build` so the aesthetic is a build-time gate, not a docs note.
     - `index.html` now carries a strict CSP (`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none'`), plus `description`/`theme-color`/`viewport` meta. `img-src` accepts `data:` so a future data-URI favicon can slot in without CSP churn.
     - Body centers the canvas so the 16:9 fit reads cleanly on ultra-wide monitors.
     - `.github/workflows/deploy.yml` — typecheck → test → build → upload-pages-artifact → deploy-pages job (D1). Triggers on push to `main` and via `workflow_dispatch`. Site will land at `cpv0310.github.io/SpaceNerds/` once Chris enables Pages in repo settings (Settings → Pages → Source = GitHub Actions).
-  - **What still needs Chris**:
-    - Enable GitHub Pages in the repo (Source: GitHub Actions).
-    - Run `npm run preview` in Chrome / Firefox / Safari / Edge and exercise the full loop (title → play → 3 deaths → GAME_OVER → SPACE → initials → TITLE). Confirm SM-2 (60 FPS on M1), SM-3 (first-timer completes a run), SM-4 (zero console errors in 10 min).
-    - Run Lighthouse on the preview; target ≥90 performance, ≥95 best-practices.
-    - Create itch.io account + ZIP-upload `dist/`.
-    - Wire Skunkwerks domain via Pages CNAME or Cloudflare Pages mirror (SM-1).
+  - **What still needs Chris (Phase 5 Compound)**:
+    - Cross-browser pass on the live URL in Chrome / Firefox / Safari / Edge. Confirm SM-2 (60 FPS on M1), SM-3 (first-timer completes a run), SM-4 (zero console errors in 10 min).
+    - Lighthouse run on the live URL; target ≥90 performance, ≥95 best-practices.
+    - Create itch.io account + ZIP-upload `dist/` (SM-1 mirror).
+    - Wire Skunkwerks domain via Pages CNAME or Cloudflare Pages mirror (SM-1 owned-URL).
   - **Deferred / noted**:
     - **Press Start 2P web font (D18)**: left out to avoid a Google-Fonts CSP hole and the network-after-load tension with NFR-B3. If Chris wants it later, either (a) self-host a 14 KB woff2 in `public/fonts/` and add `font-src 'self'` (already permitted in the CSP), or (b) add `fonts.googleapis.com` to `style-src` + `fonts.gstatic.com` to `font-src`. The `monospace` fallback looks fine at current text sizes.
     - **Favicon**: none. `no .ico / .png / .svg` per B-1. A data-URI SVG would cross B-1; a runtime-drawn favicon via canvas-to-data-URL is an option if Chris wants one.

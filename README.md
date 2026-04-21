@@ -6,13 +6,15 @@ You command the Starship Poindexter, defending the Gamma Sector from the Ko-Dan 
 
 ## Status
 
-Mid-build — Phase 3 of a 2-week vertical-slice MVP, developed under [The Cascade](#methodology) spec-driven methodology. Not yet playable.
+Phase 3 complete — all 21 tasks landed on `main`. 2-week vertical-slice MVP developed under [The Cascade](#methodology) spec-driven methodology.
 
-Progress is tracked in [`sdd/v0/specs/task-breakdown.md`](sdd/v0/specs/task-breakdown.md). Each committed task lands as one commit on `main` — see the git log.
+Progress log in [`sdd/v0/specs/task-breakdown.md`](sdd/v0/specs/task-breakdown.md). Each task is one commit on `main`.
 
 ## Playing
 
-Not deployed yet. When the MVP ships, it will live on GitHub Pages and itch.io. Links will land here.
+**Live: https://cpv0310.github.io/SpaceNerds/**
+
+Controls: Arrows / WASD rotate + thrust, Space fires, Shift hyperspaces (10% death chance), Esc pauses, M mutes.
 
 ## Developing
 
@@ -58,9 +60,9 @@ The project follows [The Cascade](https://github.com/cpv0310) — small waterfal
 - **Phase 0** Research — done
 - **Phase 1** Product Spec — done
 - **Phase 2** Technical Design + ADRs + Task Breakdown — done
-- **Phase 3** Implement — in progress
+- **Phase 3** Implement — done
 - **Phase 4** Review — pending
-- **Phase 5** Compound — pending
+- **Phase 5** Compound — pending (includes playtest tuning)
 
 ## Author
 

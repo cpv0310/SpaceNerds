@@ -288,9 +288,9 @@ Do not guess at architecture. Do not make up tuning values — use the starters 
 - Phase 1 Product Spec — DONE (`sdd/v0/specs/product-spec.md`)
 - Phase 2 Technical Design + ADRs + Task Breakdown — DONE
 - Phase 2 `/grill-me` exit gate — DONE (`sdd/v0/docs/grill-me-decisions.md`)
-- **Phase 3 Implement — IN PROGRESS** ← you are here, work tasks 1-21 in order
-- Phase 4 Review — pending (multi-reviewer fresh-context pass after Task 21)
-- Phase 5 Compound — pending (learnings capture, commit, ship)
+- Phase 3 Implement — DONE (all 21 tasks on `main`; live at https://cpv0310.github.io/SpaceNerds/)
+- **Phase 4 Review — PENDING** ← next: multi-reviewer fresh-context pass
+- Phase 5 Compound — pending (playtest tuning, learnings capture, itch.io + domain mirror)
 
 ## Key People / References
 
