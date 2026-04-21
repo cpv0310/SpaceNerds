@@ -64,3 +64,53 @@ Phase 3 Task 1 spikes LittleJS for 1-2 hours. If its input/sound/loop wrappers c
 - [Frank Force — "LittleJS, the tiny JS game engine"](https://frankforce.com/littlejs-%F0%9F%9A%82-the-tiny-javascript-game-engine-that-can/)
 - [Godot 4.3 web export progress](https://godotengine.org/article/progress-report-web-export-in-4-3/)
 - Research Brief § Recommendation / Engine Pick
+
+---
+
+## Ratification — Phase 3, Task 2 (2026-04-20)
+
+**Decision: Fall back to raw Canvas 2D. LittleJS not adopted.**
+
+### What the Task 1 spike showed
+
+Spike shipped a rotating white triangle on a black canvas, 30 minutes of work, `npm install` clean, production bundle 9.48 KB gzipped (vs. 150 KB budget). LittleJS 1.18.0 ESM import through Vite worked cleanly, types included.
+
+The spike proved LittleJS is technically viable. It did not show it is a good fit for *this* codebase.
+
+### Why Canvas 2D wins after the spike
+
+The architecture ratified in Phase 2 (ADRs 002/003/007 + CLAUDE.md) bypasses almost every piece of value LittleJS offers:
+
+| Concern | Spec says | LittleJS gives us | Net value |
+|---|---|---|---|
+| Game loop | ADR-007: own fixed-timestep 60 Hz with 250 ms accumulator clamp + Page Visibility blur handling | A different loop with different blur/pause semantics | Negative — we'd override or bypass |
+| Physics | ADR-002: Velocity Verlet (hand-rolled) | Optional Box2D WASM | Neutral — we ignore its physics |
+| Gravity | ADR-003: capped-radius inverse-square, custom accumulator | — | N/A |
+| Rendering | CLAUDE.md: batched-path (one `beginPath`/`stroke` per color) | `drawLine` is per-call | Negative — we'd `mainContext`-draw directly most of the time |
+| Coordinates | Pixel-based tunables in `src/config.ts`, single-screen wrap on four edges | World-unit system centered on origin | Negative — we'd pass `screenSpace: true` on every call |
+| Palette | Hex strings in `PALETTE` | `Color` class (0-1 floats) | Minor friction |
+
+What remains of LittleJS after those overrides is a ~300-line input manager, a `requestAnimationFrame` wrapper, and a canvas boot. All three are easier to write ourselves — and writing them ourselves means they match our spec exactly, not their author's opinions.
+
+The one concrete friction observed in the spike supports this: LittleJS's `engineInit` runs at `main.ts` top level, which blocked a straightforward unit-test import of `main.ts` from Node vitest. Not fatal, but it signals how the library wants to drive the whole app lifecycle, whereas our architecture wants to drive it.
+
+### What this changes
+
+- Dependency `littlejsengine` removed from `package.json`.
+- `src/main.ts` rewritten as raw Canvas 2D (minimal rotating-triangle equivalent to the Task 1 spike, throw-away scaffolding — Task 3 replaces it with the real fixed-timestep loop + state machine).
+- CLAUDE.md Tech Stack section listing "LittleJS (primary) or raw Canvas 2D (fallback)" is now accurate in the fallback position; the "ratified after Task 1" caveat resolves here.
+
+### Consequences
+
+- We write the ~300 lines of loop / input / canvas scaffolding ourselves, against our exact spec. Tasks 3-4-7 absorb this work with no new risk — they were already in the plan.
+- Production bundle shrinks further (not that it mattered at 9.48 KB).
+- One fewer dependency surface for Claude to hold in context across 19 remaining tasks.
+- If we later want a WebGL or physics-library path (v2+), we can adopt one piecewise without unwinding a full framework.
+
+### Trade-offs accepted
+
+- No free sound/input/loop starter. We build ours. Cost: ~1 task's worth of scaffolding, already budgeted.
+- We give up the option to lean on LittleJS idioms or its community examples during implementation.
+
+Status of original Decision section above: **superseded by this Ratification**.
+

@@ -160,8 +160,12 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - Clear choice between LittleJS and raw Canvas 2D committed.
   - Rationale recorded in ADR.
 - **Verification:** Human review (Chris).
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - Ratified **raw Canvas 2D** as the engine; LittleJS dropped. ADR-001 amended with a "Ratification — Phase 3, Task 2" section explaining the reasoning (spec-specified loop / physics / rendering bypass most of LittleJS's value; the ~300 lines of scaffolding we save are easier to write ourselves than the overrides required to use it).
+  - **Scope deviation:** Task 2's Files list is ADR-001 only, but keeping `src/main.ts` on LittleJS after ratifying Canvas 2D would put code and decision out of sync. Rewrote `src/main.ts` as raw Canvas 2D (equivalent rotating-triangle spike), added `<canvas id="game">` to `index.html`, and removed `littlejsengine` from dependencies in the same commit. This is throw-away scaffolding — Task 3 replaces it with the fixed-timestep loop + state machine.
+  - Production bundle now **1.28 KB gzipped** (was 9.48 KB with LittleJS). Budget is 150 KB. We have ~117× headroom.
+  - Visual acceptance re-confirmed by Chris after engine swap on 2026-04-20.
 
 ## Task 3: Game loop + state machine skeleton
 
