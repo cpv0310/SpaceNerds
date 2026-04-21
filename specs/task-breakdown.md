@@ -142,8 +142,14 @@ When the rule fires, append `OVERRAN: <why> → <replan decision>` to the task's
   - `npm test` runs and passes the smoke test.
   - `npm run build` produces a `dist/` folder under 150 KB gzipped.
 - **Verification:** `npm run build && du -sh dist/ && npm test`
-- **Status:** pending
+- **Status:** done
 - **Notes:**
+  - LittleJS pinned at `^1.18.0`. ESM import through Vite tree-shakes aggressively — production bundle is 28 KB on disk, **9.48 KB gzipped total** (vs. 150 KB budget). Engine choice looks viable; Task 2 will formally ratify.
+  - Scaffold stack: Vite `^5.4.0`, TypeScript `^5.4.5` strict, Vitest `^1.6.0` — all per ADR-006.
+  - `tests/smoke.test.ts` is a pipeline-level smoke (trivial assertion, ES2022 `.at()`, async/await), not an import of `main.ts`. Reason: `main.ts` calls `engineInit` at top level for the Vite bootstrap, so importing it from a Node vitest context would need jsdom or dynamic-import gymnastics. Real unit tests begin at Task 6 (physics), which is where pure helpers first appear.
+  - `scripts/check-aesthetic.mjs` listed in CLAUDE.md Repository Layout is **deferred**. No task currently owns it; slot it in before Task 21 polish, or open a micro-task.
+  - `npm audit` reports 4 moderate vulns in transitive dev deps (esbuild/Vite chain). Non-blocking for a client-only MVP; revisit at Task 21.
+  - Visual acceptance (black canvas + rotating white triangle) confirmed manually on 2026-04-20.
 
 ## Task 2: Engine choice decision
 
